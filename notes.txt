@@ -1,0 +1,33 @@
+NOTES ABOUT NOTESYS
+To do:
+ - Finish translating notes.cgi from PHP to Perl (or just completely scrap it
+   and start over)
+  - Insert lots of error & return value checking!
+  - Deal with HTML-encoding & quote-escaping of text in forms
+  - Add styles to everything
+   - Get the TEXTAREA contents to actually be monospaced?
+  - Enforce the 32-character limit for tag names & the 255-character limit for
+    the tag number string
+  - Process POSTed tag names case-insensitively
+  - Add a "reset" button to the "edit item" page
+ - Implement hierarchic to-do items
+ - Create a special tag for tagless items?
+
+Database tables:
+ - notes
+  - no - INTEGER PRIMARY KEY AUTO_INCREMENT
+  - title - VARCHAR(255) - Make this larger?
+  - contents - TEXT
+  - created - time of creation - some sort of timestamp
+  - edited - time last edited - some sort of timestamp
+  - parent - INTEGER - ID of the parent note, if any
+ - tagdata
+  - no - INTEGER PRIMARY KEY AUTO_INCREMENT
+  - name - VARCHAR(255)
+  - desc - TEXT - an (optional) user-defined description?
+ - taggings - The two fields should together form an unduplicatable key or
+   something like that.
+  - note - INTEGER - number of the item being tagged
+  - tag - INTEGER - number of the tag assigned
+ - Remove the underscore in 'AUTO_INCREMENT' when using SQLite3 instead of
+   MySQL (look into this more)

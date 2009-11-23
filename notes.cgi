@@ -1,9 +1,7 @@
 #!/usr/bin/perl -wl
 use strict;
 use CGI qw< :standard start_table start_tr start_td start_div >;
-use DBI;
-
-my $dbfile = '/Library/WebServer/Documents/db/notes.db';
+use NoteSys;
 
 my $style = <<EOT;
 pre {font-size: 10px; font-family: monaco, courier, monospace; }
@@ -12,14 +10,6 @@ EOT
 print header, start_html(-title => 'Notes', -style => {-src => '/styles.css',
  -code => $style}, -head => meta({-http_equiv => 'Content-type',
  -content => 'text/html; charset=UTF-8'}));
-
-my $link = DBI->connect("dbi:SQLite:dbname=$dbfile", '', '', {AutoCommit => 0,
- PrintError => 0, RaiseError => 1}) or die "DBI->connect: " . $DBI::errstr;
-
-my $tagName = $link->prepare('SELECT name FROM tagdata WHERE no=?');
-my $tagNum = $link->prepare('SELECT no FROM tagdata WHERE name=?');
-my $getTags = $link->prepare('SELECT tag FROM taggings WHERE note=?');
- # Should the tags be sorted somehow?
 
 sub wrapLine($;$) {
  my $str = shift;
@@ -33,19 +23,6 @@ sub wrapLine($;$) {
   $str =~ s/^\s+//;
  }
  return (@lines, $str);
-}
-
-my %tagNameCache = ();
-sub getTagName($) {
- my $no = shift;
- if (exists $tagNameCache{$no}) { return $tagNameCache{$no} }
- else {
-  $tagName->execute($no);
-  $tagNameCache{$no} = $tagName->fetchrow_array;
-  $tagName->finish;
-  $tagNameCache{$no} = "TAG_$no" if !defined $tagNameCache{$no};
-  return $tagNameCache{$no};
- }
 }
 
 sub listToDos($) {
@@ -65,18 +42,6 @@ sub listToDos($) {
  }
 }
 
-sub getTagNum($) {
- my $name = shift;
- $tagNum->execute($name);
- my $no = $tagNum->fetchrow_array;
- if (!defined $no) {
-  $link->do('INSERT INTO tagdata (name) VALUES (?)', {}, $name);
-  $tagNum->execute($name);
-  $no = $tagNum->fetchrow_array;
- }
- return $no;
-}
-
 #sub purgeZeroTags() {
 # $link->do('DELETE FROM tagdata WHERE qty <= 0');
 #}
@@ -84,7 +49,7 @@ sub getTagNum($) {
 sub tagsToNums($) {
  (my $str = shift) =~ s/^\s+|\s+$//g;
  $str =~ s/\s+/ /g;
- map { $_ eq '' ? () : getTagNum $_ } split / ?, ?/, $str;
+ map { $_ eq '' ? () : getTagID $_ } split / ?, ?/, $str;
 }
 
 
@@ -182,34 +147,3 @@ EOT;
 </TD></TR></TABLE>
 </BODY>
 </HTML>
-
-
-__END__
-
-To do:
- - Insert lots of error & return value checking!
- - Deal with HTML-encoding & quote-escaping of text in forms
- - Add styles to everything
-  - Get the TEXTAREA contents to actually be monospaced?
- - Enforce the 32-character limit for tag names & the 255-character limit for
-   the tag number string
- - Process POSTed tag names case-insensitively
- - Implement hierarchic to-do items?
- - Create a special tag for tagless items?
- - Add a "reset" button to the "edit item" page
-
-Database tables:
- - notes
-  - no - INTEGER PRIMARY KEY AUTO_INCREMENT
-  - title - VARCHAR(255)
-  - contents - TEXT
-  /*- tags - VARCHAR(255)*/
- - tagdata
-  - no - INTEGER PRIMARY KEY AUTO_INCREMENT
-  - name - VARCHAR(255)
-  /*- qty - INT DEFAULT 0*/
- - taggings
-  - note - INTEGER - number of the item being tagged
-  - tag - INTEGER - number of the tag assigned
- - Remove the underscore in 'AUTO_INCREMENT' when using sqlite3 instead of
-   MySQL (look into this more)
