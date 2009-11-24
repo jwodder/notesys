@@ -3,13 +3,9 @@ use strict;
 use CGI qw< :standard start_table start_tr start_td start_div >;
 use NoteSys;
 
-my $style = <<EOT;
-pre {font-size: 10px; font-family: monaco, courier, monospace; }
-EOT
-
-print header, start_html(-title => 'Notes', -style => {-src => '/styles.css',
- -code => $style}, -head => meta({-http_equiv => 'Content-type',
- -content => 'text/html; charset=UTF-8'}));
+print header, start_html(-title => 'Notes', -head => meta({-http_equiv =>
+ 'Content-type', -content => 'text/html; charset=UTF-8'}), -style => {-src =>
+ 'styles.css'});
 
 sub wrapLine($;$) {
  my $str = shift;
@@ -108,7 +104,7 @@ EOT;
    $cmd->execute(array($_POST['title'], $_POST['notes'], joinTags($tags))) or die ("Error: item creation: " . implode(':', $cmd->errorInfo()));
    echo "<P>Item created</P>";
   } else {
-   echo <<<EOT
+   print <<EOT
 <FORM METHOD="POST" ACTION="?new">
 <INPUT TYPE="TEXT" NAME="title" MAXLENGTH="80" SIZE="80">
 <BR>
@@ -131,19 +127,23 @@ EOT;
   /* Basic retrieval of all To-Dos */
   listToDos($link->query('SELECT no, title, notes, tags FROM todo ORDER BY no DESC'));
  }
-?>
+
+print <<EOT;
 <P><A HREF="todo.php">All items</A> | <A HREF="todo.php?new">New item</A></P>
 </TD><TD STYLE="font-size: 10px">
 <UL>
-<?PHP
+EOT
+
  $tags = $link->query('SELECT no, name, qty FROM tags WHERE qty>0 ORDER BY name COLLATE NOCASE ASC');  /* I think 'NOCASE' is an SQLite3 extension. */
  /* Check for errors */
  while ($item = $tags->fetch(PDO::FETCH_NUM)) {
   echo "<LI><A HREF='todo.php?tag=$item[0]'>", htmlspecialchars($item[1]),
    "</A> ($item[2])</LI>";
  }
-?>
-</UL>
-</TD></TR></TABLE>
-</BODY>
-</HTML>
+
+print "</UL>\n</TD></TR></TABLE>\n</BODY>\n</HTML>\n";
+
+END {
+ # print end_html;
+ $? ? abandon : disconnect;
+}

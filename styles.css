@@ -1,0 +1,42 @@
+body {
+ font-family: helvetica, sans-serif;
+ background-color: #ffffff;
+ color: #000000;
+}
+
+h1 {font-size: 32px; text-align: center; }
+h2 {font-size: 24px; text-align: center; }
+h3 {font-size: 18px; text-align: center; }
+h4 {font-size: 16px; text-align: center; }
+h5 {font-size: 13px; text-align: center; }
+h6 {font-size: 10px; text-align: center; }
+
+table {font-size: 15px; }
+//th {text-align: justify; }
+td {vertical-align: top; }
+hr {width: 450px; height: 2px; text-align: center; }
+blockquote {font-style: italic; text-align: justify; }
+ul {list-style-type: disc; }
+li {text-align: justify; margin-bottom: 13px; }
+ul li {margin-bottom: 5px; }
+img {margin: 0px; vertical-align: middle; }
+fieldset {padding: 5px; }
+pre {font-size: 10px; font-family: monaco, courier, monospace; }
+
+p {text-align: justify; }
+p.link {text-align: center; }
+p.text {text-indent: .5in; margin: 0px; }
+p.footnote {
+ font-size: 10px;
+ text-align: center;
+ margin-left: 0.5in;
+ margin-right: 0.5in;
+}
+
+.list {text-align: justify; margin: 5px; margin-left: 200px; }
+.caps {font-family: times-new-roman, serif; font-size: 13px; }
+
+a:link {color: #0000ff; text-decoration: underline; }
+a:hover {color: #ffff00; text-decoration: underline; }
+a:active {color: #ffff00; text-decoration: none; }
+a:visited {color: #ff0000; text-decoration: underline; }

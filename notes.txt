@@ -12,6 +12,7 @@ To do:
   - Add a "reset" button to the "edit item" page
  - Implement hierarchic to-do items
  - Create a special tag for tagless items?
+ - Add a way to automatically create & set up a new notes database
 
 Database tables:
  - notes

@@ -21,14 +21,17 @@ sub connect;
   # Should the tags be sorted somehow?
 }
 
+sub abandon {$link->rollback; $link->disconnect; }
+sub disconnect {$link->commit; $link->disconnect; }
+
 sub getTagID($) { # Get the ID number of a tag
  my $name = shift;
  $tagNum->execute($name);
- my $no = $tagNum->fetchrow_array;
+ my($no) = $tagNum->fetchrow_array;
  if (!defined $no) {
   $link->do('INSERT INTO tagdata (name) VALUES (?)', {}, $name);
   $tagNum->execute($name);
-  $no = $tagNum->fetchrow_array;
+  ($no) = $tagNum->fetchrow_array;
  }
  return $no;
 }
@@ -39,18 +42,20 @@ sub getTagName($) { # Get the name of a tag based on its ID
  if (exists $tagNameCache{$no}) { return $tagNameCache{$no} }
  else {
   $tagName->execute($no);
-  $tagNameCache{$no} = $tagName->fetchrow_array;
+  ($tagNameCache{$no}) = $tagName->fetchrow_array;
   $tagName->finish;
   $tagNameCache{$no} = "TAG_$no" if !defined $tagNameCache{$no};
   return $tagNameCache{$no};
  }
 }
 
-sub disconnect;
+sub countNotes { ($link->selectrow_array('SELECT COUNT(*) FROM notes'))[0] }
+
+sub countTags { ($link->selectrow_array('SELECT COUNT(tag) FROM taggings'))[0] }
+ # This SQL statement probably isn't right.
+
 sub getNoteByID;
 sub getNotesByTag;  # Returns a list of notes
 sub getAllNotes;
-sub countNotes;
-sub countTags;
 # sub getTagDescription; # ???
 sub getChildNotes;  # Get the notes that have the given note ID as a parent
