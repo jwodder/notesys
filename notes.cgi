@@ -1,11 +1,14 @@
 #!/usr/bin/perl -wl
 use strict;
-use CGI qw< :standard start_table start_tr start_td start_div >;
+use CGI qw< :standard start_table start_Tr start_td start_div >;
+use CGI::Carp 'fatalsToBrowser';
 use NoteSys;
 
 print header, start_html(-title => 'Notes', -head => meta({-http_equiv =>
  'Content-type', -content => 'text/html; charset=UTF-8'}), -style => {-src =>
  'styles.css'});
+
+connect;
 
 sub wrapLine($;$) {
  my $str = shift;
@@ -21,62 +24,44 @@ sub wrapLine($;$) {
  return (@lines, $str);
 }
 
-sub listToDos($) {
- my $rows = shift;
- while (my @item = $rows->fetchrow_array) {
-  print start_div({-style => 'margin-bottom: 2ex'}), b(escapeHTML($item[1])),
-   ' &#x2014; ', a({-href => url(-relative => 1) . "?edit=$item[0]"}, 'Edit'),
-   ' ', a({-href => url(-relative => 1) . "?del=item[0]"}, 'Delete');
-  print $item[2] eq '' ? br : pre(map { escapeHTML "$_\n" }
-   map { wrapLine($_, 80) } split /\n/, $item[2]);
-  $getTags->execute($item[0]);
-  while (my @t = $getTags->fetchrow_array) {
-   print a({-href => url(-relative => 1) . "?tag=$t[0]"},
-    escapeHTML(getTagName($t[0]))), ' ';
-  }
-  print end_div;
- }
+sub printNote($) {
+ my $note = shift;
+ print start_div({-style => 'margin-bottom: 2ex'}),
+  b(escapeHTML($note->title)), ' &#x2014; ', a({-href => url(-relative => 1) .
+  '?edit=' . $note->id}, 'Edit'), ' ', a({-href => url(-relative => 1) .
+  '?del=' . $note->id}, 'Delete');
+ print $note->contents eq '' ? br : pre(map { escapeHTML "$_\n" }
+  map { wrapLine($_, 80) } split /\n/, $note->contents);
+ map {
+  print a({-href => url(-relative => 1) . '?tag=' . $_->[0]},
+   escapeHTML($_->[1])), ' '
+ } @{$note->tags};
+ # Somewhere in here print 'created', 'edited', and information about parent &
+ # child notes.
+ print end_div;
 }
 
-#sub purgeZeroTags() {
-# $link->do('DELETE FROM tagdata WHERE qty <= 0');
-#}
-
-sub tagsToNums($) {
+sub parseTagList($) {
  (my $str = shift) =~ s/^\s+|\s+$//g;
- $str =~ s/\s+/ /g;
- map { $_ eq '' ? () : getTagID $_ } split / ?, ?/, $str;
+ map { $_ eq '' ? () : getTagByName $_ } split /\s*,\s*/, $str;
 }
 
-
-print start_table({-border => 0, -align => 'center'}), start_tr,
+print start_table({-border => 0, -align => 'center'}), start_Tr,
  start_td({-width => 500});
 print p(a({-href => url(-relative => 1)}, 'All items') . ' | '
  . a({-href => url(-relative => 1) . '?new'}, 'New item'));
 
-
- if (isset($_GET['edit'])) {
-  $old = $link->query('SELECT * FROM todo WHERE no=' . (int) $_GET['edit']);
-  /* Check for errors! */
-  $todo = $old->fetch(PDO::FETCH_ASSOC);
-  $old = NULL;
-  if ($_POST) {
-   $oldTags = array();
-   foreach (splitTags($todo['tags']) as $t) $oldTags[$t] = 0;
-   $newTags = tagsToNums($_POST['tags']);
-   foreach ($newTags as $t) {
-    if (array_key_exists($t, $oldTags)) $oldTags[$t]++;
-    else incrementTag($t);
-   }
-   foreach ($oldTags as $t => $b) if (!$b) decrementTag($t);
-   purgeZeroTags();
-   // Modify this so that it only updates fields that changed
-   $cmd = $link->prepare('UPDATE todo SET title=?, notes=?, tags=? where no=?');
-   // ^^vv Check return values!!!
-   $cmd->execute(array($_POST['title'], $_POST['notes'], joinTags($newTags), (int) $_GET['edit'])) or die("Error: editing item: " . implode(':', $cmd->errorInfo()));
-   echo "<P>Item edited</P>";
-  } else {
-   echo <<<EOT
+if (defined url_param('edit')) {
+ my $old = fetchNote url_param('edit');
+ # Check for errors!
+ if (param) {
+  my $new = new Note id => $old->id, title => param('title'),
+   contents => param('contents'), tags => [ parseTagList param('tags') ];
+   # Add in something about the 'parent'?
+  updateNote($old, $new);
+  print p('Item edited');
+ } else {
+   print <<EOT
 <FORM METHOD="POST" ACTION="?edit={$_GET['edit']}">
 <!-- TO DO: Perform escaping on the VALUEs -->
 <INPUT TYPE="TEXT" NAME="title" MAXLENGTH="80" SIZE="80" VALUE="{$todo['title']}">
@@ -91,10 +76,14 @@ EOT;
 <BR>
 <INPUT TYPE="SUBMIT" VALUE="Submit">
 </FORM>
-EOT;
+EOT
   }
  } else if (isset($_GET['tag'])) {
-  listToDos($link->query('SELECT no, title, notes, tags FROM todo WHERE tags LIKE "% ' . (int) $_GET['tag'] . ' %" ORDER BY no DESC'));
+  map { printNote(fetchNote $_) } getNotesByTag(param('tag'));
+   # ORDER BY no DESC
+# } else if (isset($_GET['tagname'])) {
+#  my $tag = getTabByName param('tagname');
+#  map { printNote(fetchNote $_) } getNotesByTag($tag->[0]); # ORDER BY no DESC
  } else if (isset($_GET['new'])) {
   if ($_POST) {
    $tags = tagsToNums($_POST['tags']);
@@ -123,10 +112,7 @@ EOT;
   $link->exec('DELETE FROM todo WHERE no=' . (int) $_GET['del']);
   /* Check return value? */
   echo "<P>Item deleted</P>";
- } else {
-  /* Basic retrieval of all To-Dos */
-  listToDos($link->query('SELECT no, title, notes, tags FROM todo ORDER BY no DESC'));
- }
+ } else { map { printNote(fetchNote $_) } getAllNotes } # ORDER BY no DESC
 
 print <<EOT;
 <P><A HREF="todo.php">All items</A> | <A HREF="todo.php?new">New item</A></P>
@@ -141,9 +127,8 @@ EOT
    "</A> ($item[2])</LI>";
  }
 
-print "</UL>\n</TD></TR></TABLE>\n</BODY>\n</HTML>\n";
+#print end_ul;
 
-END {
- # print end_html;
- $? ? abandon : disconnect;
-}
+print end_td, end_Tr, end_table;
+
+END {print end_html; $? ? abandon : disconnect; }
