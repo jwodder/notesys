@@ -25,7 +25,7 @@ Database tables:
  - tagdata
   - no - INTEGER PRIMARY KEY AUTO_INCREMENT
   - name - VARCHAR(255)
-  - desc - TEXT - an (optional) user-defined description?
+  # - desc - TEXT - an (optional) user-defined description?
  - taggings - The two fields should together form an unduplicatable key or
    something like that.
   - note - INTEGER - number of the item being tagged
