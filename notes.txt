@@ -1,22 +1,26 @@
 NOTES ABOUT NOTESYS
 To do:
- - Deal with HTML-encoding & quote-escaping of text in forms
- - Add styles to everything
-  - Get the TEXTAREA contents to actually be monospaced?
+ - Web interface:
+  - Add styles to everything
+  - Get the TEXTAREA contents to actually be monospaced
+  - Add a "reset" button to the "edit note" page
+  - Add a confirmation page before deleting a note
+  - Find & make URLs active when displaying notes
+  - Escape the contents of ?tag fields in generated queries
  - Enforce a 32-character (or longer?) limit for tag names
- - Process POSTed tag names case-insensitively
- - Add a "reset" button to the "edit item" page
+ - Handle tags case-insensitively
  - Implement hierarchic to-do items
- - Create a special tag for tagless items?
  - Add a way to automatically create & set up a new notes database
- - Add a confirmation page before deleting a note
  - Improve the error handling?
- - Find & make URLs active when displaying notes
- - Escape the contents of ?tag fields in generated queries
+ - Automatically sort notes when retrieving them from the database or before
+   returning them from NoteSys functions
+ - Implement manipulation of 'created' and 'edited' fields
+ - Check the validity of all SQL statements!
+ - Add a way to retrieve all untagged items
 
 Database tables:
  - notes
-  - no - INTEGER PRIMARY KEY AUTO_INCREMENT
+  - idno - INTEGER PRIMARY KEY AUTO_INCREMENT
   - title - VARCHAR(255) - Make this larger?
   - contents - TEXT
   - created - time of creation - some sort of timestamp
