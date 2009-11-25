@@ -2,17 +2,20 @@ NOTES ABOUT NOTESYS
 To do:
  - Finish translating notes.cgi from PHP to Perl (or just completely scrap it
    and start over)
-  - Insert lots of error & return value checking!
-  - Deal with HTML-encoding & quote-escaping of text in forms
-  - Add styles to everything
-   - Get the TEXTAREA contents to actually be monospaced?
-  - Enforce the 32-character limit for tag names & the 255-character limit for
-    the tag number string
-  - Process POSTed tag names case-insensitively
-  - Add a "reset" button to the "edit item" page
+ - Deal with HTML-encoding & quote-escaping of text in forms
+ - Add styles to everything
+  - Get the TEXTAREA contents to actually be monospaced?
+ - Enforce a 32-character (or longer?) limit for tag names
+ - Process POSTed tag names case-insensitively
+ - Add a "reset" button to the "edit item" page
  - Implement hierarchic to-do items
  - Create a special tag for tagless items?
  - Add a way to automatically create & set up a new notes database
+ - Get rid of the system of storing tags by IDs and just store the strings in
+   'taggings'
+ - Add a confirmation page before deleting a note
+ - Improve the error handling?
+ - Find & make URLs active when displaying notes
 
 Database tables:
  - notes

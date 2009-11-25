@@ -100,6 +100,7 @@ sub updateNote($$) {
 
 sub createNote($);
 sub getTagQty($);
+sub deleteNote($);  # Takes a note ID
 
 
 package Note;

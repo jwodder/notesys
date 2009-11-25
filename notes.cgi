@@ -1,6 +1,6 @@
 #!/usr/bin/perl -wl
 use strict;
-use CGI qw< :standard start_table start_Tr start_td start_div >;
+use CGI qw< :standard start_table start_Tr start_td start_div start_ul >;
 use CGI::Carp 'fatalsToBrowser';
 use NoteSys;
 
@@ -32,9 +32,8 @@ sub printNote($) {
   '?del=' . $note->id}, 'Delete');
  print $note->contents eq '' ? br : pre(map { escapeHTML "$_\n" }
   map { wrapLine($_, 80) } split /\n/, $note->contents);
- map {
-  print a({-href => url(-relative => 1) . '?tag=' . $_->[0]},
-   escapeHTML($_->[1])), ' '
+ print join ', ', map {
+  a({-href => url(-relative => 1) . '?tag=' . $_->[0]}, escapeHTML($_->[1]))
  } @{$note->tags};
  # Somewhere in here print 'created', 'edited', and information about parent &
  # child notes.
@@ -57,68 +56,43 @@ if (defined url_param('edit')) {
  if (param) {
   my $new = new Note id => $old->id, title => param('title'),
    contents => param('contents'), tags => [ parseTagList param('tags') ];
-   # Add in something about the 'parent'?
+  # Add in something for the 'parent'?
   updateNote($old, $new);
-  print p('Item edited');
+  print p('Note edited');
  } else {
-   print <<EOT
-<FORM METHOD="POST" ACTION="?edit={$_GET['edit']}">
-<!-- TO DO: Perform escaping on the VALUEs -->
-<INPUT TYPE="TEXT" NAME="title" MAXLENGTH="80" SIZE="80" VALUE="{$todo['title']}">
-<BR>
-<TT><TEXTAREA NAME="notes" COLS="80" ROWS="6">{$todo['notes']}</TEXTAREA></TT>
-<BR>
-<INPUT TYPE="TEXT" NAME="tags" MAXLENGTH="255" SIZE="80" VALUE="
-EOT;
-   echo implode(' ', array_map('getTagName', splitTags($todo['tags'])));
-   echo <<<EOT
-">
-<BR>
-<INPUT TYPE="SUBMIT" VALUE="Submit">
-</FORM>
-EOT
-  }
- } else if (isset($_GET['tag'])) {
-  map { printNote(fetchNote $_) } getNotesByTag(param('tag'));
-   # ORDER BY no DESC
-# } else if (isset($_GET['tagname'])) {
-#  my $tag = getTabByName param('tagname');
-#  map { printNote(fetchNote $_) } getNotesByTag($tag->[0]); # ORDER BY no DESC
- } else if (isset($_GET['new'])) {
-  if ($_POST) {
-   $tags = tagsToNums($_POST['tags']);
-   foreach ($tags as $t) incrementTag($t);
-   $cmd = $link->prepare('INSERT INTO todo (title, notes, tags) VALUES (?, ?, ?)');
-   /* ^^vv Check return values!!! */
-   $cmd->execute(array($_POST['title'], $_POST['notes'], joinTags($tags))) or die ("Error: item creation: " . implode(':', $cmd->errorInfo()));
-   echo "<P>Item created</P>";
-  } else {
-   print <<EOT
-<FORM METHOD="POST" ACTION="?new">
-<INPUT TYPE="TEXT" NAME="title" MAXLENGTH="80" SIZE="80">
-<BR>
-<TT><TEXTAREA NAME="notes" COLS="80" ROWS="6"></TEXTAREA></TT>
-<BR>
-<INPUT TYPE="TEXT" NAME="tags" MAXLENGTH="255" SIZE="80">
-<BR>
-<INPUT TYPE="SUBMIT" VALUE="Submit">
-</FORM>
-EOT;
-  }
- } else if (isset($_GET['del'])) {
-  $tags = $link->query('SELECT tags FROM todo WHERE no=' . (int) $_GET['del']);
-  foreach (splitTags($tags->fetchColumn()) as $t) decrementTag($t);
-  purgeZeroTags();
-  $link->exec('DELETE FROM todo WHERE no=' . (int) $_GET['del']);
-  /* Check return value? */
-  echo "<P>Item deleted</P>";
- } else { map { printNote(fetchNote $_) } getAllNotes } # ORDER BY no DESC
+  print start_form(-action => url(-relative => 1) . '?edit=' . $old->id);
+  print textfield('title', $old->title, 80, 255);
+  print br, tt(textarea('contents', $old->contents, 6, 80)), br;
+  print textfield('tags', join(', ', $old->tagNames), 80, 255);
+  print br, submit(-value => 'Submit'), end_form;
+ }
+} elsif (defined url_param('tag')) {
+ map { printNote(fetchNote $_) } getNotesByTag(url_param('tag'))
+  # ORDER BY no DESC
+#} elsif (defined url_param('tagname')) {
+# my $tag = getTagByName url_param('tagname');
+# map { printNote(fetchNote $_) } getNotesByTag($tag->[0]); # ORDER BY no DESC
+} elsif (defined url_param('new')) {
+ if (param) {
+  createNote(new Note title => param('title'), contents => param('contents'),
+   tags => [ parseTagList param('tags') ]);
+  print p('Note created');
+ } else {
+  print start_form(-action => url(-relative => 1) . '?new');
+  print textfield('title', '', 80, 255);
+  print br, tt(textarea('contents', '', 6, 80)), br;
+  print textfield('tags', '', 80, 255);
+  print br, submit(-value => 'Submit'), end_form;
+ }
+} elsif (defined url_param('del')) {
+ deleteNote(url_param('del'));
+ print p('Note deleted');
+} else { map { printNote(fetchNote $_) } getAllNotes } # ORDER BY no DESC
 
-print <<EOT;
-<P><A HREF="todo.php">All items</A> | <A HREF="todo.php?new">New item</A></P>
-</TD><TD STYLE="font-size: 10px">
-<UL>
-EOT
+print p(a({-href => url(-relative => 1)}, 'All notes') . ' | '
+ . a({-href => url(-relative => 1) . '?new'}, 'New note'));
+print end_td, start_td({-style => 'font-size: 10px'}), start_ul;
+
 
  $tags = $link->query('SELECT no, name, qty FROM tags WHERE qty>0 ORDER BY name COLLATE NOCASE ASC');  /* I think 'NOCASE' is an SQLite3 extension. */
  /* Check for errors */
@@ -127,8 +101,7 @@ EOT
    "</A> ($item[2])</LI>";
  }
 
-#print end_ul;
 
-print end_td, end_Tr, end_table;
+print end_ul, end_td, end_Tr, end_table;
 
 END {print end_html; $? ? abandon : disconnect; }
