@@ -33,7 +33,8 @@ sub printNote($) {
  print $note->contents eq '' ? br : pre(map { escapeHTML "$_\n" }
   map { wrapLine($_, 80) } split /\n/, $note->contents);
  print join ', ', map {
-  a({-href => url(-relative => 1) . '?tag=' . $_->[0]}, escapeHTML($_->[1]))
+  a({-href => url(-relative => 1) . '?tag=' . $_}, escapeHTML($_))
+  # The tag name in the query string NEEDS to be escaped!
  } @{$note->tags};
  # Somewhere in here print 'created', 'edited', and information about parent &
  # child notes.
@@ -42,7 +43,7 @@ sub printNote($) {
 
 sub parseTagList($) {
  (my $str = shift) =~ s/^\s+|\s+$//g;
- map { $_ eq '' ? () : getTagByName $_ } split /\s*,\s*/, $str;
+ map { $_ eq '' ? () : $_ } split /\s*,\s*/, $str;
 }
 
 print start_table({-border => 0, -align => 'center'}), start_Tr,
@@ -63,15 +64,12 @@ if (defined url_param('edit')) {
   print start_form(-action => url(-relative => 1) . '?edit=' . $old->id);
   print textfield('title', $old->title, 80, 255);
   print br, tt(textarea('contents', $old->contents, 6, 80)), br;
-  print textfield('tags', join(', ', $old->tagNames), 80, 255);
+  print textfield('tags', join(', ', @{$old->tags}), 80, 255);
   print br, submit(-value => 'Submit'), end_form;
  }
 } elsif (defined url_param('tag')) {
  map { printNote(fetchNote $_) } getNotesByTag(url_param('tag'))
   # ORDER BY no DESC
-#} elsif (defined url_param('tagname')) {
-# my $tag = getTagByName url_param('tagname');
-# map { printNote(fetchNote $_) } getNotesByTag($tag->[0]); # ORDER BY no DESC
 } elsif (defined url_param('new')) {
  if (param) {
   createNote(new Note title => param('title'), contents => param('contents'),
@@ -91,17 +89,14 @@ if (defined url_param('edit')) {
 
 print p(a({-href => url(-relative => 1)}, 'All notes') . ' | '
  . a({-href => url(-relative => 1) . '?new'}, 'New note'));
-print end_td, start_td({-style => 'font-size: 10px'}), start_ul;
+print end_td, start_td({-style => 'font-size: 10px'});
 
+print ul(map {
+ li(a({-href => url(-relative => 1) . '?tag=' . $_->[0]}, escapeHTML($_->[0]))
+ # The tag name in the query string NEEDS to be escaped!
+  . ' (' . $_->[1] . ')');
+} getTagsAndQtys);
 
- $tags = $link->query('SELECT no, name, qty FROM tags WHERE qty>0 ORDER BY name COLLATE NOCASE ASC');  /* I think 'NOCASE' is an SQLite3 extension. */
- /* Check for errors */
- while ($item = $tags->fetch(PDO::FETCH_NUM)) {
-  echo "<LI><A HREF='todo.php?tag=$item[0]'>", htmlspecialchars($item[1]),
-   "</A> ($item[2])</LI>";
- }
-
-
-print end_ul, end_td, end_Tr, end_table;
+print end_td, end_Tr, end_table;
 
 END {print end_html; $? ? abandon : disconnect; }
