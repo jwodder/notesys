@@ -7,7 +7,7 @@ our @ISA = ('Exporter');
 our $VERSION = v0.1;
 our @EXPORT = qw< connect abandon disconnect countNotes countTags fetchNote
  getTaggedNoteIDs getAllNoteIDs getChildNoteIDs updateNote deleteNote
- createNote getTagsAndQtys >;
+ createNote getTagsAndQtys getNoteTreeHash attachNote detachNote >;
 our @EXPORT_OK = qw< createDB >;
 use DBI;
 
@@ -33,6 +33,7 @@ sub connect() {
 }
 
 sub abandon() {
+ return if !defined $db;
  $db->rollback;
  undef $getTags;
  undef $noteById;
@@ -44,6 +45,7 @@ sub abandon() {
 }
 
 sub disconnect() {
+ return if !defined $db;
  $db->commit;
  # Undefining all of the prepared statement handles seems to be the only way to
  # avoid warnings about closing the database connection "with active statement
@@ -137,6 +139,28 @@ sub createDB($) {
   });
  $db->commit;
  $db->disconnect;
+}
+
+sub getNoteTreeHash($) {
+ # Returns a hash representing the tree of note IDs rooted at the given ID
+ my %children;
+ my @nodes = @_;
+ while (@nodes) {
+  my $n = shift @nodes;
+  my @offspring = getChildNoteIDs $n;
+  $children{$n} = [ @offspring ];
+  push @nodes, @offspring;
+ }
+ return %children;
+}
+
+sub attachNote($$) {
+ my($parent, $child) = @_;
+ $db->do('UPDATE notes SET parent=? WHERE idno=?', {}, $parent, $child);
+}
+
+sub detachNote($) {
+ $db->do('UPDATE notes SET parent=NULL WHERE idno=?', {}, $_[0])
 }
 
 

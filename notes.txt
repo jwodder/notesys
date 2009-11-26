@@ -1,16 +1,16 @@
 NOTES ABOUT NOTESYS
 To do:
  - Web interface:
-  - Escape the contents of ?tag fields in generated queries (and handle
-    non-ASCII characters in said queries)
-  - Add a confirmation page before deleting a note
-  - Add "back" links to the note creation, deletion, & editing confirmation
-    pages that take the user back to the listing previously viewed
-  - Add a "reset" button to the "edit note" page
+  - Escape the contents of ?tag fields in generated queries
+  - Add "back" links that return the user to the listing previously viewed to:
+   - the note editing page
+   - the deletion confirmation page (at least via the "No" button)
+   - the note creation page
+   - the confirmation messages for creation, deletion, & editing
   - Add more/better styles
-  - Find & make URLs active when displaying notes
   - Get the TEXTAREA contents to actually be monospaced
   - Strip the CRs from CRLFs in POSTed 'contents' fields
+  - Find & make URLs active when displaying notes
  - Enforce a 32-character (or longer?) limit for tag names
  - Handle tags case-insensitively
  - Implement hierarchic to-do items
@@ -20,11 +20,12 @@ To do:
   - Handle having no notes to display (either from selecting a nonexistent tag
     or from viewing an empty database)
  - Add a way to retrieve all untagged items
- - Improve the sorting of notes?
- - Deal with sorting of notes when retrieving by tag
+ - Improve the sorting of notes when retrieving by tag
  - Improve the formatting of the timestamps as retrieved from the database
+ - Add a way for the user to configure how notes are sorted
 
 SQLite3 database contents:
+ - See createDB() in NoteSys.pm for the actual complete definitions
  - notes
   - idno - INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
   - title - VARCHAR(255) - Make this larger?
@@ -35,13 +36,3 @@ SQLite3 database contents:
  - taggings
   - note - INTEGER NOT NULL - number of the item being tagged
   - tag - VARCHAR(255) NOT NULL
- - Database creation commands:
-  -- Issue ``PRAGMA encoding = "UTF-8";'' before creating the database
-  CREATE TABLE notes (idno INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-   title VARCHAR(255) NOT NULL DEFAULT "Untitled", contents TEXT NOT NULL
-   DEFAULT "", created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-   edited TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, parent INTEGER
-   DEFAULT NULL);
-  CREATE TABLE taggings (note INTEGER NOT NULL, tag VARCHAR(255) NOT NULL,
-   FOREIGN KEY (note) REFERENCES notes(idno), PRIMARY KEY (note, tag)
-   ON CONFLICT IGNORE);
