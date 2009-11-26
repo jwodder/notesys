@@ -30,14 +30,14 @@ sub printNote($) {
   b(escapeHTML($note->title)), ' &#x2014; ', a({-href => url(-relative => 1) .
   '?edit=' . $note->idno}, 'Edit'), ' ', a({-href => url(-relative => 1) .
   '?del=' . $note->idno}, 'Delete');
- print $note->contents eq '' ? br : pre(map { escapeHTML "$_\n" }
+ print $note->contents eq '' ? br : pre(join "\n", map { escapeHTML $_ }
   map { wrapLine($_, 80) } split /\n/, $note->contents);
  print join ', ', map {
   a({-href => url(-relative => 1) . '?tag=' . $_}, escapeHTML($_))
   # The tag name in the query string NEEDS to be escaped!
  } @{$note->tags};
- print br, p({-class => 'timestamp'}, 'Created:', $note->created,
-  $note->created eq $note->edited ? '' : '| Edited: ' . $note->edited);
+ print p({-class => 'timestamp'}, 'Created:', $note->created,
+  $note->created eq $note->edited ? '' : '&#x2014; Edited: ' . $note->edited);
  print end_div;
 }
 
@@ -55,7 +55,7 @@ print p(a({-href => url(-relative => 1)}, 'All items') . ' | '
 if (defined url_param('edit')) {
  my $old = fetchNote url_param('edit');
  # Check for errors!
- if (param) {
+ if (defined param('title')) {
   my $new = new Note idno => $old->idno, title => param('title'),
    contents => param('contents'), tags => [ parseTagList param('tags') ];
   # Add in something for the 'parent'?
@@ -70,9 +70,8 @@ if (defined url_param('edit')) {
  }
 } elsif (defined url_param('tag')) {
  map { printNote(fetchNote $_) } getTaggedNoteIDs(url_param('tag'))
-  # ORDER BY no DESC
 } elsif (defined url_param('new')) {
- if (param) {
+ if (defined param('title')) {
   createNote(new Note title => param('title'), contents => param('contents'),
    tags => [ parseTagList param('tags') ]);
   print p('Note created');
@@ -86,7 +85,7 @@ if (defined url_param('edit')) {
 } elsif (defined url_param('del')) {
  deleteNote(url_param('del'));
  print p('Note deleted');
-} else { map { printNote(fetchNote $_) } getAllNoteIDs } # ORDER BY no DESC
+} else { map { printNote(fetchNote $_) } getAllNoteIDs }
 
 print p(a({-href => url(-relative => 1)}, 'All notes') . ' | '
  . a({-href => url(-relative => 1) . '?new'}, 'New note'));

@@ -1,7 +1,8 @@
 NOTES ABOUT NOTESYS
 To do:
  - Web interface:
-  - Escape the contents of ?tag fields in generated queries
+  - Escape the contents of ?tag fields in generated queries (and handle
+    non-ASCII characters in said queries)
   - Add a confirmation page before deleting a note
   - Add "back" links to the note creation, deletion, & editing confirmation
     pages that take the user back to the listing previously viewed
@@ -9,11 +10,11 @@ To do:
   - Add more/better styles
   - Find & make URLs active when displaying notes
   - Get the TEXTAREA contents to actually be monospaced
+  - Strip the CRs from CRLFs in POSTed 'contents' fields
  - Enforce a 32-character (or longer?) limit for tag names
  - Handle tags case-insensitively
  - Implement hierarchic to-do items
- - Add a way to automatically create & set up a new notes database
- - Write programs for creating & loading textual dumps of the database?
+ - Write programs for creating & loading textual dumps of the database
  - Improve the error handling
   - Handle the nonexistence of a requested note
   - Handle having no notes to display (either from selecting a nonexistent tag
@@ -21,6 +22,7 @@ To do:
  - Add a way to retrieve all untagged items
  - Improve the sorting of notes?
  - Deal with sorting of notes when retrieving by tag
+ - Improve the formatting of the timestamps as retrieved from the database
 
 SQLite3 database contents:
  - notes

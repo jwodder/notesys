@@ -8,6 +8,7 @@ our $VERSION = v0.1;
 our @EXPORT = qw< connect abandon disconnect countNotes countTags fetchNote
  getTaggedNoteIDs getAllNoteIDs getChildNoteIDs updateNote deleteNote
  createNote getTagsAndQtys >;
+our @EXPORT_OK = qw< createDB >;
 use DBI;
 
 my $dbfile = '/Library/WebServer/Documents/db/notes.db';
@@ -22,16 +23,39 @@ sub connect() {
   ' COLLATE NOCASE ASC');
  $noteById = $db->prepare('SELECT idno, title, contents, created, edited,' .
   ' parent FROM notes WHERE idno=?');
- $getTaggedNotes = $db->prepare('SELECT note FROM taggings WHERE tag=?');
-  # ORDER BY created DESC ???
+ $getTaggedNotes = $db->prepare('SELECT note FROM taggings WHERE tag=?' .
+  ' ORDER BY note DESC');
+  # ORDER BY notes.created DESC ???
  $getChildren = $db->prepare('SELECT idno FROM notes WHERE parent=?' .
   ' ORDER BY created DESC');
  $addTag = $db->prepare('INSERT INTO taggings (note, tag) VALUES (?, ?)');
  $delTag = $db->prepare('DELETE FROM taggings WHERE note=? AND tag=?');
 }
 
-sub abandon() {$db->rollback; $db->disconnect; }
-sub disconnect() {$db->commit; $db->disconnect; }
+sub abandon() {
+ $db->rollback;
+ undef $getTags;
+ undef $noteById;
+ undef $getTaggedNotes;
+ undef $getChildren;
+ undef $addTag;
+ undef $delTag;
+ $db->disconnect;
+}
+
+sub disconnect() {
+ $db->commit;
+ # Undefining all of the prepared statement handles seems to be the only way to
+ # avoid warnings about closing the database connection "with active statement
+ # handles" (No, calling 'finish' on them doesn't work).
+ undef $getTags;
+ undef $noteById;
+ undef $getTaggedNotes;
+ undef $getChildren;
+ undef $addTag;
+ undef $delTag;
+ $db->disconnect;
+}
 
 sub countNotes() { ($db->selectrow_array('SELECT COUNT(*) FROM notes'))[0] }
 
@@ -61,8 +85,8 @@ sub getChildNoteIDs($) { @{$db->selectcol_arrayref($getChildren, {}, $_[0])} }
 sub updateNote($$) {
 # Rewrite this so that only changed fields are updated.
  my($old, $new) = @_;
- my %oldTags = map { $_ => 0 } $old->tags;
- for ($new->tags) {
+ my %oldTags = map { $_ => 0 } @{$old->tags};
+ for (@{$new->tags}) {
   if (exists $oldTags{$_}) { $oldTags{$_}++ }
   else { $addTag->execute($old->idno, $_) }
  }
@@ -84,8 +108,6 @@ sub createNote($) { # Returns the ID of the new note
  $db->do('INSERT INTO notes (title, contents) VALUES (?, ?)', {}, $new->title,
   $new->contents);
  my $newid = $db->last_insert_id(undef, undef, 'notes', undef);
-  # The above line is highly non-portable ... not that this code is likely to
-  # ever be ported.
  $addTag->execute($newid, $_) for @{$new->tags};
  return $newid;
 }
@@ -93,6 +115,28 @@ sub createNote($) { # Returns the ID of the new note
 sub getTagsAndQtys() {
  @{$db->selectall_arrayref('SELECT tag, COUNT(*) FROM taggings GROUP BY tag' .
   ' ORDER BY tag COLLATE NOCASE ASC')}
+}
+
+sub createDB($) {
+ $db = DBI->connect("dbi:SQLite:dbname=$_[0]", '', '', {AutoCommit => 0,
+  PrintError => 0, RaiseError => 1}) or die "DBI->connect: " . $DBI::errstr;
+ $db->{unicode} = 1;
+ $db->do('PRAGMA foreign_keys = ON');
+ $db->do('PRAGMA encoding = "UTF-8"');
+ $db->do(q{
+  CREATE TABLE notes (idno INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+   title VARCHAR(255) NOT NULL DEFAULT "Untitled", contents TEXT NOT NULL
+   DEFAULT "", created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   edited TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, parent INTEGER
+   DEFAULT NULL)
+  });
+ $db->do(q{
+  CREATE TABLE taggings (note INTEGER NOT NULL, tag VARCHAR(255) NOT NULL,
+   FOREIGN KEY (note) REFERENCES notes(idno), PRIMARY KEY (note, tag)
+   ON CONFLICT IGNORE)
+  });
+ $db->commit;
+ $db->disconnect;
 }
 
 
