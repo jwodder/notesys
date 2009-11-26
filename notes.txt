@@ -1,34 +1,45 @@
 NOTES ABOUT NOTESYS
 To do:
  - Web interface:
-  - Add styles to everything
-  - Get the TEXTAREA contents to actually be monospaced
-  - Add a "reset" button to the "edit note" page
-  - Add a confirmation page before deleting a note
-  - Find & make URLs active when displaying notes
   - Escape the contents of ?tag fields in generated queries
+  - Add a confirmation page before deleting a note
+  - Add "back" links to the note creation, deletion, & editing confirmation
+    pages that take the user back to the listing previously viewed
+  - Add a "reset" button to the "edit note" page
+  - Add more/better styles
+  - Find & make URLs active when displaying notes
+  - Get the TEXTAREA contents to actually be monospaced
  - Enforce a 32-character (or longer?) limit for tag names
  - Handle tags case-insensitively
  - Implement hierarchic to-do items
  - Add a way to automatically create & set up a new notes database
- - Improve the error handling?
- - Automatically sort notes when retrieving them from the database or before
-   returning them from NoteSys functions
- - Implement manipulation of 'created' and 'edited' fields
- - Check the validity of all SQL statements!
+ - Write programs for creating & loading textual dumps of the database?
+ - Improve the error handling
+  - Handle the nonexistence of a requested note
+  - Handle having no notes to display (either from selecting a nonexistent tag
+    or from viewing an empty database)
  - Add a way to retrieve all untagged items
+ - Improve the sorting of notes?
+ - Deal with sorting of notes when retrieving by tag
 
-Database tables:
+SQLite3 database contents:
  - notes
-  - idno - INTEGER PRIMARY KEY AUTO_INCREMENT
+  - idno - INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
   - title - VARCHAR(255) - Make this larger?
   - contents - TEXT
-  - created - time of creation - some sort of timestamp
-  - edited - time last edited - some sort of timestamp
-  - parent - INTEGER - ID of the parent note, if any - default 0 or NULL?
- - taggings - The two fields should together form an unduplicatable key or
-   something like that.
-  - note - INTEGER - number of the item being tagged
-  - tag - VARCHAR(255)
- - Remove the underscore in 'AUTO_INCREMENT' when using SQLite3 instead of
-   MySQL (look into this more)
+  - created - TIMESTAMP DEFAULT CURRENT_TIMESTAMP - time of creation
+  - edited - TIMESTAMP DEFAULT CURRENT_TIMESTAMP - time last edited
+  - parent - INTEGER - ID of the parent note, if any; NULL if no parent
+ - taggings
+  - note - INTEGER NOT NULL - number of the item being tagged
+  - tag - VARCHAR(255) NOT NULL
+ - Database creation commands:
+  -- Issue ``PRAGMA encoding = "UTF-8";'' before creating the database
+  CREATE TABLE notes (idno INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+   title VARCHAR(255) NOT NULL DEFAULT "Untitled", contents TEXT NOT NULL
+   DEFAULT "", created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   edited TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, parent INTEGER
+   DEFAULT NULL);
+  CREATE TABLE taggings (note INTEGER NOT NULL, tag VARCHAR(255) NOT NULL,
+   FOREIGN KEY (note) REFERENCES notes(idno), PRIMARY KEY (note, tag)
+   ON CONFLICT IGNORE);

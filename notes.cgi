@@ -6,7 +6,7 @@ use NoteSys;
 
 print header, start_html(-title => 'Notes', -head => meta({-http_equiv =>
  'Content-type', -content => 'text/html; charset=UTF-8'}), -style => {-src =>
- 'styles.css'});
+ 'notes.css'});
 
 connect;
 
@@ -26,7 +26,7 @@ sub wrapLine($;$) {
 
 sub printNote($) {
  my $note = shift;
- print start_div({-style => 'margin-bottom: 2ex'}),
+ print start_div({-class => 'noteBlock'}),
   b(escapeHTML($note->title)), ' &#x2014; ', a({-href => url(-relative => 1) .
   '?edit=' . $note->idno}, 'Edit'), ' ', a({-href => url(-relative => 1) .
   '?del=' . $note->idno}, 'Delete');
@@ -36,8 +36,8 @@ sub printNote($) {
   a({-href => url(-relative => 1) . '?tag=' . $_}, escapeHTML($_))
   # The tag name in the query string NEEDS to be escaped!
  } @{$note->tags};
- # Somewhere in here print 'created', 'edited', and information about parent &
- # child notes.
+ print br, p({-class => 'timestamp'}, 'Created:', $note->created,
+  $note->created eq $note->edited ? '' : '| Edited: ' . $note->edited);
  print end_div;
 }
 
@@ -48,8 +48,7 @@ sub parseTagList($) {
 
 print start_table({-border => 0, -align => 'center'}), start_Tr,
  start_td({-width => 500});
-print p({-style => 'font-size: 10px'}, countNotes, 'notes |', countTags,
- 'tags');
+print p({-class => 'totals'}, countNotes, 'notes |', countTags, 'tags');
 print p(a({-href => url(-relative => 1)}, 'All items') . ' | '
  . a({-href => url(-relative => 1) . '?new'}, 'New item'));
 
@@ -91,7 +90,7 @@ if (defined url_param('edit')) {
 
 print p(a({-href => url(-relative => 1)}, 'All notes') . ' | '
  . a({-href => url(-relative => 1) . '?new'}, 'New note'));
-print end_td, start_td({-style => 'font-size: 10px'});
+print end_td, start_td({-class => 'tagList'});
 
 print ul(map {
  li(a({-href => url(-relative => 1) . '?tag=' . $_->[0]}, escapeHTML($_->[0]))

@@ -1,3 +1,6 @@
+# This module is for using NoteSys with a SQLite3 database.  For other
+# databases, use different versions of this file.
+
 package NoteSys;
 require Exporter;
 our @ISA = ('Exporter');
@@ -13,12 +16,16 @@ my($db, $getTags, $noteById, $getTaggedNotes, $getChildren, $addTag, $delTag);
 sub connect() {
  $db = DBI->connect("dbi:SQLite:dbname=$dbfile", '', '', {AutoCommit => 0,
   PrintError => 0, RaiseError => 1}) or die "DBI->connect: " . $DBI::errstr;
- $getTags = $db->prepare('SELECT tag FROM taggings WHERE note=?');
-  # Should the tags be sorted somehow?
+ $db->{unicode} = 1;
+ $db->do('PRAGMA foreign_keys = ON');
+ $getTags = $db->prepare('SELECT tag FROM taggings WHERE note=? ORDER BY tag' .
+  ' COLLATE NOCASE ASC');
  $noteById = $db->prepare('SELECT idno, title, contents, created, edited,' .
   ' parent FROM notes WHERE idno=?');
  $getTaggedNotes = $db->prepare('SELECT note FROM taggings WHERE tag=?');
- $getChildren = $db->prepare('SELECT idno FROM notes WHERE parent=?');
+  # ORDER BY created DESC ???
+ $getChildren = $db->prepare('SELECT idno FROM notes WHERE parent=?' .
+  ' ORDER BY created DESC');
  $addTag = $db->prepare('INSERT INTO taggings (note, tag) VALUES (?, ?)');
  $delTag = $db->prepare('DELETE FROM taggings WHERE note=? AND tag=?');
 }
@@ -28,29 +35,31 @@ sub disconnect() {$db->commit; $db->disconnect; }
 
 sub countNotes() { ($db->selectrow_array('SELECT COUNT(*) FROM notes'))[0] }
 
-sub countTags() { ($db->selectrow_array('SELECT COUNT(tag) FROM taggings'))[0] }
- # This SQL statement probably isn't right.
+sub countTags() {
+ ($db->selectrow_array('SELECT COUNT(DISTINCT tag) FROM taggings'))[0]
+}
 
 sub fetchNote($) {
  # Create the Note object for the given ID
  my $id = shift;
- my @dat = $db->selectrow_array($noteById, {}, $id);
+ my $note = new Note %{$db->selectrow_hashref($noteById, {}, $id)};
  # What should I do when the note doesn't exist?
- new Note idno => $dat[0], title => $dat[1], contents => $dat[2], created =>
-  $dat[3], edited => $dat[4], parent => $dat[5],
-  tags => $db->selectcol_arrayref($getTags, {}, $id);
+ $note->tags($db->selectcol_arrayref($getTags, {}, $id));
+ return $note;
 }
 
 sub getTaggedNoteIDs($) { # Returns the note IDs with the given tag
  @{$db->selectcol_arrayref($getTaggedNotes, {}, $_[0])}
 }
 
-sub getAllNoteIDs() { @{$db->selectcol_arrayref('SELECT idno FROM notes')} }
+sub getAllNoteIDs() {
+ @{$db->selectcol_arrayref('SELECT idno FROM notes ORDER BY created DESC')}
+}
+
 sub getChildNoteIDs($) { @{$db->selectcol_arrayref($getChildren, {}, $_[0])} }
 
 sub updateNote($$) {
-# - Make sure that 'edited' is updated at some point in this function.
-# - Rewrite this so that only changed fields are updated.
+# Rewrite this so that only changed fields are updated.
  my($old, $new) = @_;
  my %oldTags = map { $_ => 0 } $old->tags;
  for ($new->tags) {
@@ -60,18 +69,17 @@ sub updateNote($$) {
  while (($tag, $kept) = each %oldTags) {
   $delTag->execute($old->idno, $tag) if !$kept
  }
- $db->do('UPDATE notes SET title=?, contents=? WHERE idno=?', {}, $new->title,
-  $new->contents, $old->idno);
+ $db->do('UPDATE notes SET title=?, contents=?, edited=CURRENT_TIMESTAMP' .
+  ' WHERE idno=?', {}, $new->title, $new->contents, $old->idno);
 }
 
 sub deleteNote($) { # Takes a note ID
  my $id = shift;
- $db->do('DELETE FROM notes WHERE idno=?', {}, $id);
  $db->do('DELETE FROM taggings WHERE note=?', {}, $id);
+ $db->do('DELETE FROM notes WHERE idno=?', {}, $id);
 }
 
-sub createNote($) {
-# Make sure that 'created' and 'edited' are set at some point in this function.
+sub createNote($) { # Returns the ID of the new note
  my $new = shift;
  $db->do('INSERT INTO notes (title, contents) VALUES (?, ?)', {}, $new->title,
   $new->contents);
@@ -79,13 +87,12 @@ sub createNote($) {
   # The above line is highly non-portable ... not that this code is likely to
   # ever be ported.
  $addTag->execute($newid, $_) for @{$new->tags};
+ return $newid;
 }
 
 sub getTagsAndQtys() {
- @{$db->selectall_arrayref('SELECT tag, COUNT(note) FROM taggings ORDER BY tag'
-  . ' COLLATE NOCASE ASC')}
- # I doubt the above SQL statement is right.  Also, 'NOCASE' might be
- # SQLite3-specific.
+ @{$db->selectall_arrayref('SELECT tag, COUNT(*) FROM taggings GROUP BY tag' .
+  ' ORDER BY tag COLLATE NOCASE ASC')}
 }
 
 
