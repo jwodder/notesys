@@ -3,10 +3,10 @@ use strict;
 use NoteSys qw< :DEFAULT createDB >;
 
 BEGIN {
-# my $dbfile = '/Library/WebServer/Documents/db/notes.db';
+ my $dbfile = '/Library/WebServer/Documents/db/notes.db';
 # -e $dbfile and unlink($dbfile) || die "$0: couldn't delete $dbfile: $!\n";
 # createDB $dbfile;
- connect;
+ connectDB $dbfile;
  $/ = '';
 }
 
@@ -20,4 +20,4 @@ if (/((?:^>.*?\n?)+)$/m) {
 createNote $note;
 sleep 1;
 
-END { $? ? abandon : disconnect }
+END { $? ? abandonDB : disconnectDB }

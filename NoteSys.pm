@@ -4,25 +4,27 @@
 package NoteSys;
 require Exporter;
 our @ISA = ('Exporter');
-our $VERSION = v0.1;
-our @EXPORT = qw< connect abandon disconnect countNotes countTags fetchNote
- getTaggedNoteIDs getAllNoteIDs getChildNoteIDs updateNote deleteNote
- createNote getTagsAndQtys getNoteTreeHash attachNote detachNote >;
+our $VERSION = v1.0;
+our @EXPORT = qw< connectDB abandonDB disconnectDB countNotes countTags
+ fetchNote getTaggedNoteIDs getAllNoteIDs getChildNoteIDs updateNote deleteNote
+ createNote getTagsAndQtys getNoteTreeHash attachNote detachNote topLevelNotes
+ >;
 our @EXPORT_OK = qw< createDB >;
+use POSIX 'strftime';
 use DBI;
 
-my $dbfile = '/Library/WebServer/Documents/db/notes.db';
 my($db, $getTags, $noteById, $getTaggedNotes, $getChildren, $addTag, $delTag);
 
-sub connect() {
- $db = DBI->connect("dbi:SQLite:dbname=$dbfile", '', '', {AutoCommit => 0,
+sub connectDB($) {
+ $db = DBI->connect("dbi:SQLite:dbname=$_[0]", '', '', {AutoCommit => 0,
   PrintError => 0, RaiseError => 1}) or die "DBI->connect: " . $DBI::errstr;
  $db->{unicode} = 1;
  $db->do('PRAGMA foreign_keys = ON');
  $getTags = $db->prepare('SELECT tag FROM taggings WHERE note=? ORDER BY tag' .
   ' COLLATE NOCASE ASC');
- $noteById = $db->prepare('SELECT idno, title, contents, created, edited,' .
-  ' parent FROM notes WHERE idno=?');
+ $noteById = $db->prepare('SELECT idno, title, contents, strftime("%s",' .
+  ' created) AS created, strftime("%s", edited) AS edited, parent FROM notes' .
+  ' WHERE idno=?');
  $getTaggedNotes = $db->prepare('SELECT note FROM taggings WHERE tag=?' .
   ' ORDER BY note DESC');
   # ORDER BY notes.created DESC ???
@@ -32,7 +34,7 @@ sub connect() {
  $delTag = $db->prepare('DELETE FROM taggings WHERE note=? AND tag=?');
 }
 
-sub abandon() {
+sub abandonDB() {
  return if !defined $db;
  $db->rollback;
  undef $getTags;
@@ -44,7 +46,7 @@ sub abandon() {
  $db->disconnect;
 }
 
-sub disconnect() {
+sub disconnectDB() {
  return if !defined $db;
  $db->commit;
  # Undefining all of the prepared statement handles seems to be the only way to
@@ -65,11 +67,15 @@ sub countTags() {
  ($db->selectrow_array('SELECT COUNT(DISTINCT tag) FROM taggings'))[0]
 }
 
-sub fetchNote($) {
- # Create the Note object for the given ID
+sub fetchNote($) { # Create the Note object for the given ID
  my $id = shift;
- my $note = new Note %{$db->selectrow_hashref($noteById, {}, $id)};
- # What should I do when the note doesn't exist?
+ my $data = $db->selectrow_hashref($noteById, {}, $id);
+ return undef if !defined $data;
+ my $note = new Note %$data;
+ # SQLite3's strftime() function supports only a measly subset of the standard
+ # conversion specifications, so timestamp formatting has to be done in Perl:
+ $note->created(strftime('%d %b %Y, %H:%M:%S %Z', localtime($note->created)));
+ $note->edited(strftime('%d %b %Y, %H:%M:%S %Z', localtime($note->edited)));
  $note->tags($db->selectcol_arrayref($getTags, {}, $id));
  return $note;
 }
@@ -120,7 +126,7 @@ sub getTagsAndQtys() {
 }
 
 sub createDB($) {
- $db = DBI->connect("dbi:SQLite:dbname=$_[0]", '', '', {AutoCommit => 0,
+ my $db = DBI->connect("dbi:SQLite:dbname=$_[0]", '', '', {AutoCommit => 0,
   PrintError => 0, RaiseError => 1}) or die "DBI->connect: " . $DBI::errstr;
  $db->{unicode} = 1;
  $db->do('PRAGMA foreign_keys = ON');
@@ -161,6 +167,10 @@ sub attachNote($$) {
 
 sub detachNote($) {
  $db->do('UPDATE notes SET parent=NULL WHERE idno=?', {}, $_[0])
+}
+
+sub topLevelNotes() {
+ @{$db->selectcol_arrayref('SELECT idno FROM notes WHERE parent=NULL')}
 }
 
 

@@ -11,26 +11,36 @@ h4 {font-size: 16px; text-align: center; }
 h5 {font-size: 13px; text-align: center; }
 h6 {font-size: 10px; text-align: center; }
 
+a {text-decoration: none; }
+a:link {color: #0000ff; }
+a:hover {color: #ffff00; }
+a:active {color: #ffffff; }
+a:visited {color: #ff0000; }
+
 table {font-size: 15px; }
 td {vertical-align: top; }
 ul {list-style-type: disc; }
-li {text-align: justify; margin-bottom: 13px; }
-ul li {margin-bottom: 5px; }
-pre {font-size: 10px; font-family: monaco, courier, monospace; }
+li {margin-bottom: 5px; }
 p {text-align: justify; }
 
+pre {
+ font-size: 10px;
+ font-family: monaco, courier, monospace;
+ background-color: #e8e8e8;
+}
+
 p.totals {font-size: 10px; } /* Note & tag quantities */
+
 div.noteBlock {margin-bottom: 3ex; }
-p.editDel {font-size: 10px; } /* 'Edit' and 'Delete' links */
-p.timestamp {font-size: 10px; } /* 'Created' and 'Edited' listings */
+.editDel {font-size: 10px; } /* 'Edit' and 'Delete' links */
+p.tags {font-size: 10px; } /* List of tags beneath a note */
+p.timestamp {font-size: 10px; margin: 0px; }
+ /* 'Created' and 'Edited' listings */
+
 .tagList {font-size: 10px; }
+ /* Complete listing of all tags on the side of the page */
 
 /* These may be useful later:
 fieldset {padding: 5px; }
 hr {width: 450px; height: 2px; text-align: center; }
 */
-
-a:link {color: #0000ff; text-decoration: underline; }
-a:hover {color: #ffff00; text-decoration: underline; }
-a:active {color: #ffff00; text-decoration: none; }
-a:visited {color: #ff0000; text-decoration: underline; }
