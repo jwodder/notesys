@@ -8,7 +8,7 @@ our $VERSION = v1.0;
 our @EXPORT = qw< connectDB abandonDB disconnectDB countNotes countTags
  fetchNote getTaggedNoteIDs getAllNoteIDs getChildNoteIDs updateNote deleteNote
  createNote getTagsAndQtys getNoteTreeHash attachNote detachNote topLevelNotes
- >;
+ getInternalDates >;
 our @EXPORT_OK = qw< createDB >;
 use POSIX 'strftime';
 use DBI;
@@ -91,7 +91,7 @@ sub getAllNoteIDs() {
 sub getChildNoteIDs($) { @{$db->selectcol_arrayref($getChildren, {}, $_[0])} }
 
 sub updateNote($$) {
-# Rewrite this so that only changed fields are updated.
+ # Rewrite this so that only changed fields are updated.
  my($old, $new) = @_;
  my %oldTags = map { $_ => 0 } @{$old->tags};
  for (@{$new->tags}) {
@@ -113,8 +113,15 @@ sub deleteNote($) { # Takes a note ID
 
 sub createNote($) { # Returns the ID of the new note
  my $new = shift;
- $db->do('INSERT INTO notes (title, contents) VALUES (?, ?)', {}, $new->title,
-  $new->contents);
+ # Should these statements be prepared?
+ if (defined $new->created || defined $new->edited) {
+  $db->do('INSERT INTO notes (title, contents, created, edited) VALUES (?, ?,' .
+   ' ?, ?)', {}, $new->title, $new->contents, $new->created || $new->edited,
+   $new->edited || $new->created)
+ } else {
+  $db->do('INSERT INTO notes (title, contents) VALUES (?, ?)', {}, $new->title,
+   $new->contents)
+ }
  my $newid = $db->last_insert_id(undef, undef, 'notes', undef);
  $addTag->execute($newid, $_) for @{$new->tags};
  return $newid;
@@ -128,7 +135,6 @@ sub getTagsAndQtys() {
 sub createDB($) {
  my $db = DBI->connect("dbi:SQLite:dbname=$_[0]", '', '', {AutoCommit => 0,
   PrintError => 0, RaiseError => 1}) or die "DBI->connect: " . $DBI::errstr;
- $db->{unicode} = 1;
  $db->do('PRAGMA foreign_keys = ON');
  $db->do('PRAGMA encoding = "UTF-8"');
  $db->do(q{
@@ -171,6 +177,13 @@ sub detachNote($) {
 
 sub topLevelNotes() {
  @{$db->selectcol_arrayref('SELECT idno FROM notes WHERE parent=NULL')}
+}
+
+sub getInternalDates($) {
+ # Returns the timestamps on the given note as stored internally rather than in
+ # the prettified form used by fetchNote
+ $db->selectrow_array('SELECT created, edited FROM notes WHERE idno=?', {}, @_)
+ # Should this statement be prepared?
 }
 
 
