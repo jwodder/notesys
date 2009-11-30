@@ -15,7 +15,7 @@ use DBI;
 
 my($db, $getTags, $noteById, $getTaggedNotes, $getChildren, $addTag, $delTag);
 
-sub connectDB($) {
+sub connectDB($;%) {
  $db = DBI->connect("dbi:SQLite:dbname=$_[0]", '', '', {AutoCommit => 0,
   PrintError => 0, RaiseError => 1}) or die "DBI->connect: " . $DBI::errstr;
  $db->{unicode} = 1;
@@ -132,7 +132,7 @@ sub getTagsAndQtys() {
   ' ORDER BY tag COLLATE NOCASE ASC')}
 }
 
-sub createDB($) {
+sub createDB($;%) {
  my $db = DBI->connect("dbi:SQLite:dbname=$_[0]", '', '', {AutoCommit => 0,
   PrintError => 0, RaiseError => 1}) or die "DBI->connect: " . $DBI::errstr;
  $db->do('PRAGMA foreign_keys = ON');

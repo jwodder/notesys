@@ -13,9 +13,10 @@ h6 {font-size: 10px; text-align: center; }
 
 a {text-decoration: none; }
 a:link {color: #0000ff; }
-a:hover {color: #ffff00; }
-a:active {color: #ffffff; }
-a:visited {color: #ff0000; }
+a:hover {/*color: #ffff00;*/ text-decoration: underline; }
+/*a:active {color: #ffffff; }*/
+/*a:visited {color: #ff0000; }*/
+a:visited {color: #0000ff; }
 
 table {font-size: 15px; }
 td {vertical-align: top; }

@@ -16,7 +16,8 @@ if (url_param('del') && defined param('decision')
 }
 
 print header(-type => 'text/html; charset=UTF-8'), start_html(-title =>
- 'Notes', -encoding => 'UTF-8', -style => {-src => 'notes.css'});
+ 'Notes', -encoding => 'UTF-8', -style => {-src => 'notes.css'}, -head =>
+ Link({-rel => 'icon', -type => 'text/png', -href => 'notes.png'}));
 # Yes, specifying the encoding twice in this way is necessary so that CGI.pm
 # will print it correctly and Safari & Firefox will interpret it correctly.
 connectDB $dbfile;

@@ -7,16 +7,19 @@ To do:
    - the note creation page
    - the confirmation messages for creation, deletion, & editing
   - Add more/better styles
-  - Get the TEXTAREA contents to actually be monospaced
+  - Get the <textarea> contents to actually be monospaced
   - Strip the CRs from CRLFs in POSTed 'contents' fields?
   - Find & make URLs active when displaying notes
   - When listing large amounts of notes, break the list up into several pages
     (100 notes to a page?)
-  - Add a way to change a tag's name
   - Redirect warnings to the browser?
   - After creating, deleting, or editing a note, have the counts at the top of
     the confirmation page reflect the change
-  - Add a favicon
+  - Add fancy JavaScript stuff:
+   - editing notes directly in the listings
+   - auto-completion of tag names
+   - collapsing the contents of a displayed note
+  - Make the <title> change depending on what is being viewed
  - Implement hierarchic to-do items
   - Add ways to manipulate the hierarchy to the web interface
   - Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
@@ -35,12 +38,16 @@ To do:
   - Add a way to get the unions, intersections, and complements of sets of
     notes with given tags
   - Enforce a 32-character (or longer?) limit for tag names
+  - Add a way to do batch operations like deleting or renaming all occurrences
+    of a tag and replacing or augmenting all occurrences of a tag with one or
+    more other tags
  - Upload this project to Github?  (If I do so, the code should have an
    explicit license attached to it, probably the GNU Affero GPL.)
  - Prevent characters like newlines & tabs from appearing in titles and tag
    names
  - Test out the programs in util/
- - How should loadDB.pl handle Unicode input?
+ - Make loadDB.pl handle Unicode input properly?
+ - Create a curses-based interface to the database?
 
 SQLite3 database contents:
  - See createDB() in NoteSys.pm for the actual complete definitions
