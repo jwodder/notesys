@@ -84,7 +84,6 @@ sub parseTagList($) {
 
 print start_table({-border => 0, -align => 'center'}), start_Tr,
  start_td({-width => 500});
-print p({-class => 'totals'}, countNotes, 'notes |', countTags, 'tags');
 print p(a({-href => url(-relative => 1)}, 'All notes'), '|',
  a({-href => modeLink 'new'}, 'New note'));
 
@@ -135,11 +134,18 @@ if ($mode eq 'edit') {
 
 print p(a({-href => url(-relative => 1)}, 'All notes'), '|',
  a({-href => modeLink 'new'}, 'New note'));
+
 print end_td, start_td({-class => 'tagList'});
+
+my($notes, $tags) = (countNotes, countTags);
+print p({-class => 'totals'}, $notes, $notes == 1 ? 'note' : 'notes', '|',
+ $tags, $tags == 1 ? 'tag' : 'tags');
+
 print ul(map {
  li(a({-href => modeLink('tag', $_->[0])}, escapeHTML($_->[0])),
   '(' . $_->[1] . ')');
 } getTagsAndQtys);
+
 print end_td, end_Tr, end_table, end_html;
 
 END { $? ? abandonDB : disconnectDB }

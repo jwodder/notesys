@@ -1,5 +1,9 @@
-# This module is for using NoteSys with a SQLite3 database.  For other
-# databases, use different versions of this file.
+# This module is an interface between notes.cgi and a SQLite3 database.  If you
+# want to use a different kind of database, you need to create & use a separate
+# version of this file.
+
+# See the end of the file for brief descriptions of the contents of the
+# database.
 
 package NoteSys;
 require Exporter;
@@ -105,7 +109,7 @@ sub updateNote($$) {
   ' WHERE idno=?', {}, $new->title, $new->contents, $old->idno);
 }
 
-sub deleteNote($) { # Takes a note ID
+sub deleteNote($) {
  my $id = shift;
  $db->do('DELETE FROM taggings WHERE note=?', {}, $id);
  $db->do('DELETE FROM notes WHERE idno=?', {}, $id);
@@ -199,3 +203,18 @@ sub children { map { fetchNote $_ } getChildNoteIDs($_[0]->idno) }
 sub tagList { @{$_[0]->tags} }
 
 1;
+
+__END__
+
+SQLite3 database contents:
+ - See createDB() for the actual complete definitions
+ - TABLE notes
+  - idno - INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT - note ID
+  - title - VARCHAR(255) - note title; make this larger?
+  - contents - TEXT - contents of the note
+  - created - TIMESTAMP DEFAULT CURRENT_TIMESTAMP - time of creation
+  - edited - TIMESTAMP DEFAULT CURRENT_TIMESTAMP - time last edited
+  - parent - INTEGER - ID of the parent note, if any; NULL if no parent
+ - TABLE taggings
+  - note - INTEGER NOT NULL - ID of the note being tagged
+  - tag - VARCHAR(255) NOT NULL - tag applied to the note
