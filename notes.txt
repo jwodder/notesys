@@ -1,11 +1,6 @@
 NOTES ABOUT NOTESYS
 To do:
  - Web interface:
-  - Add "back" links that return the user to the listing previously viewed to:
-   - the note editing page
-   - the deletion confirmation page (at least via the "No" button)
-   - the note creation page
-   - the confirmation messages for creation, deletion, & editing
   - Add more/better styles
   - Get the <textarea> contents to actually be monospaced
   - Strip the CRs from CRLFs in POSTed 'contents' fields?
@@ -48,6 +43,7 @@ To do:
  - Test out the programs in util/
  - Make loadDB.pl handle Unicode input properly?
  - Create a curses-based interface to the database?
+ - Handle invalid note IDs in mode=edit and mode=del queries
 
 SQLite3 database contents:
  - See createDB() in NoteSys.pm for the actual complete definitions

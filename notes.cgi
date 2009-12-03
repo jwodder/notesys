@@ -9,17 +9,41 @@ my $dbfile = '/Library/WebServer/Documents/db/notes.db';
 
 binmode STDOUT, ':encoding(UTF-8)';
 
-if (url_param('del') && defined param('decision')
+my %modeHash = (new => 0, back => 0, edit => 1, del => 1, tag => 1);
+my $mode = url_param('mode');
+my $modeArg = url_param('arg');
+$mode = 'all' if !defined $mode || !exists $modeHash{$mode}
+ || $modeHash{$mode} == 1 && (!defined $modeArg || $modeArg eq '');
+
+sub modeLink($;$) {
+ my($mode, $arg) = @_;
+ my $url = url . "?mode=$mode";
+ if (defined $arg) { return $url . '&arg=' . uri_escape_utf8($arg) }
+ else { return $url }
+}
+
+if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
  && param('decision') ne 'Yes') {
- print redirect(url);
+ my $last = cookie('lastTag');
+ print redirect(defined $last && $last ne '' ? modeLink('tag', $last) : url);
  exit(0);
 }
 
-print header(-type => 'text/html; charset=UTF-8'), start_html(-title =>
- 'Notes', -encoding => 'UTF-8', -style => {-src => 'notes.css'}, -head =>
- Link({-rel => 'icon', -type => 'text/png', -href => 'notes.png'}));
-# Yes, specifying the encoding twice in this way is necessary so that CGI.pm
-# will print it correctly and Safari & Firefox will interpret it correctly.
+my @cookies = ();
+if ($mode eq 'all') {
+ @cookies = (-cookie => cookie(-name => 'lastTag', -value => ''))
+} elsif ($mode eq 'tag') {
+ @cookies = (-cookie => cookie(-name => 'lastTag', -value => $modeArg))
+}
+
+print header(-type => 'text/html; charset=UTF-8', @cookies), start_html(-title
+ => 'Notes', -encoding => 'UTF-8', -declare_xml => 1, -style => {-src =>
+ 'notes.css'}, -head => Link({-rel => 'icon', -type => 'text/png', -href =>
+ 'notes.png'}));
+# Yes, specifying the encoding twice is necessary so that CGI.pm will send the
+# correct headers and so that the in-document charset information agrees with
+# said headers.
+
 connectDB $dbfile;
 
 sub wrapLine($;$) {
@@ -39,14 +63,13 @@ sub wrapLine($;$) {
 sub printNote($) {
  my $note = shift;
  print start_div({-class => 'noteBlock'}), b(escapeHTML($note->title)); 
- print ' ', span({-class => 'editDel'}, a({-href => url(-relative => 1) .
-  '?edit=' . $note->idno}, 'Edit') . '&nbsp;' . a({-href => url(-relative => 1)
-  . '?del=' . $note->idno}, 'Delete'));
+ print ' ', span({-class => 'editDel'}, a({-href => modeLink('edit',
+  $note->idno)}, 'Edit') . '&nbsp;' . a({-href => modeLink('del',
+  $note->idno)}, 'Delete'));
  print pre(join "\n", map { escapeHTML $_ } map { wrapLine($_, 80) }
   split /\n/, $note->contents) if $note->contents ne '';
  print p({-class => 'tags'}, join ', ', map {
-  a({-href => url(-relative => 1) . '?tag=' . uri_escape_utf8($_)},
-   escapeHTML($_))
+  a({-href => modeLink('tag', $_)}, escapeHTML($_))
  } @{$note->tags});
  print p({-class => 'timestamp'}, 'Created:', $note->created);
  print p({-class => 'timestamp'}, 'Edited:', $note->edited)
@@ -63,58 +86,59 @@ print start_table({-border => 0, -align => 'center'}), start_Tr,
  start_td({-width => 500});
 print p({-class => 'totals'}, countNotes, 'notes |', countTags, 'tags');
 print p(a({-href => url(-relative => 1)}, 'All notes'), '|',
- a({-href => url(-relative => 1) . '?new'}, 'New note'));
+ a({-href => modeLink 'new'}, 'New note'));
 
-if (defined url_param('edit')) {
- my $old = fetchNote url_param('edit');
+if ($mode eq 'edit') {
+ my $old = fetchNote $modeArg;
  if (defined param('title')) {
   my $new = new Note idno => $old->idno, title => param('title'),
    contents => param('contents'), tags => [ parseTagList param('tags') ];
   updateNote($old, $new);
-  print p('Note edited');
+  print p('Note edited'), p(a({-href => modeLink 'back'}, 'Back'));
  } else {
   print start_form(-action => url(-relative => 1, -query => 1));
   print textfield('title', $old->title, 80, 255);
   print br, tt(textarea('contents', $old->contents, 10, 80)), br;
   print textfield('tags', join(', ', @{$old->tags}), 80, 255);
-  print br, submit(-value => 'Submit'), '&nbsp;' x 20, reset, end_form;
+  print br, submit(-value => 'Submit'), '&nbsp;' x 20, reset, '&nbsp;' x 20,
+   a({-href => modeLink 'back'}, 'Back'), end_form;
  }
-} elsif (defined url_param('tag')) {
- map { printNote(fetchNote $_) } getTaggedNoteIDs(url_param('tag'))
-} elsif (defined url_param('new') || defined url_param('keywords')
- && url_param('keywords') =~ /\bnew\b/) {
+} elsif ($mode eq 'tag') {
+ map { printNote(fetchNote $_) } getTaggedNoteIDs $modeArg
+} elsif ($mode eq 'new') {
  if (defined param('title')) {
   createNote(new Note title => param('title'), contents => param('contents'),
    tags => [ parseTagList param('tags') ]);
-  print p('Note created');
+  print p('Note created'), p(a({-href => modeLink 'back'}, 'Back'));
  } else {
   print start_form(-action => url(-relative => 1, -query => 1));
   print textfield('title', '', 80, 255);
   print br, tt(textarea('contents', '', 10, 80)), br;
   print textfield('tags', '', 80, 255);
-  print br, submit(-value => 'Submit'), end_form;
+  print br, submit(-value => 'Submit'), '&nbsp;' x 20, a({-href =>
+   modeLink 'back'}, 'Back'), end_form;
  }
-} elsif (defined url_param('del')) {
+} elsif ($mode eq 'del') {
  if (defined param('decision') && param('decision') eq 'Yes') {
-  deleteNote(url_param('del'));
-  print p('Note deleted');
+  deleteNote $modeArg;
+  print p('Note deleted'), p(a({-href => modeLink 'back'}, 'Back'));
  } else {
   print p('Are you sure you want to delete this note?');
   print start_form(-action => url(-relative => 1, -query => 1));
   print p(submit('decision', 'Yes'), '&nbsp;' x 20, submit('decision', 'No'));
   print end_form;
-  printNote(fetchNote url_param('del'));
+  printNote(fetchNote $modeArg);
    # The 'edit' and/or 'delete' links should probably be omitted when
    # displaying the note here.
  }
 } else { map { printNote(fetchNote $_) } getAllNoteIDs }
 
 print p(a({-href => url(-relative => 1)}, 'All notes'), '|',
- a({-href => url(-relative => 1) . '?new'}, 'New note'));
+ a({-href => modeLink 'new'}, 'New note'));
 print end_td, start_td({-class => 'tagList'});
 print ul(map {
- li(a({-href => url(-relative => 1) . '?tag=' . uri_escape_utf8($_->[0])},
-  escapeHTML($_->[0])), '(' . $_->[1] . ')');
+ li(a({-href => modeLink('tag', $_->[0])}, escapeHTML($_->[0])),
+  '(' . $_->[1] . ')');
 } getTagsAndQtys);
 print end_td, end_Tr, end_table, end_html;
 
