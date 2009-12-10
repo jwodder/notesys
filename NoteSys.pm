@@ -97,8 +97,8 @@ sub getChildNoteIDs($) { @{$db->selectcol_arrayref($getChildren, {}, $_[0])} }
 sub updateNote($$) {
  # Rewrite this so that only changed fields are updated.
  my($old, $new) = @_;
- my %oldTags = map { $_ => 0 } @{$old->tags};
- for (@{$new->tags}) {
+ my %oldTags = map { $_ => 0 } $old->tagList;
+ for ($new->tagList) {
   if (exists $oldTags{$_}) { $oldTags{$_}++ }
   else { $addTag->execute($old->idno, $_) }
  }
@@ -127,7 +127,7 @@ sub createNote($) { # Returns the ID of the new note
    $new->contents)
  }
  my $newid = $db->last_insert_id(undef, undef, 'notes', undef);
- $addTag->execute($newid, $_) for @{$new->tags};
+ $addTag->execute($newid, $_) for $new->tagList;
  return $newid;
 }
 

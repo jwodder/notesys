@@ -17,6 +17,7 @@ $mode = 'all' if !defined $mode || !exists $modeHash{$mode}
 
 sub modeLink($;$) {
  my($mode, $arg) = @_;
+ return url if $mode eq 'all';
  my $url = url . "?mode=$mode";
  if (defined $arg) { return $url . '&arg=' . uri_escape_utf8($arg) }
  else { return $url }
@@ -25,7 +26,8 @@ sub modeLink($;$) {
 if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
  && param('decision') ne 'Yes') {
  my $last = cookie('lastTag');
- print redirect(defined $last && $last ne '' ? modeLink('tag', $last) : url);
+ print redirect(defined $last && $last ne '' ? modeLink('tag', $last)
+  : modeLink 'all');
  exit(0);
 }
 
@@ -70,9 +72,9 @@ sub printNote($) {
   split /\n/, $note->contents) if $note->contents ne '';
  print p({-class => 'tags'}, join ', ', map {
   a({-href => modeLink('tag', $_)}, escapeHTML($_))
- } @{$note->tags});
+ } $note->tagList);
  print p({-class => 'timestamp'}, 'Created:', $note->created);
- print p({-class => 'timestamp'}, 'Edited:', $note->edited)
+ print p({-class => 'timestamp'}, 'Last edited:', $note->edited)
   if $note->created ne $note->edited;
  print end_div;
 }
@@ -84,7 +86,7 @@ sub parseTagList($) {
 
 print start_table({-border => 0, -align => 'center'}), start_Tr,
  start_td({-width => 500});
-print p(a({-href => url(-relative => 1)}, 'All notes'), '|',
+print p(a({-href => modeLink 'all'}, 'All notes'), '|',
  a({-href => modeLink 'new'}, 'New note'));
 
 if ($mode eq 'edit') {
@@ -95,11 +97,11 @@ if ($mode eq 'edit') {
   updateNote($old, $new);
   print p('Note edited'), p(a({-href => modeLink 'back'}, 'Back'));
  } else {
-  print start_form(-action => url(-relative => 1, -query => 1));
+  print start_form(-action => modeLink($mode, $modeArg));
   print textfield('title', $old->title, 80, 255);
   print br, tt(textarea('contents', $old->contents, 10, 80)), br;
-  print textfield('tags', join(', ', @{$old->tags}), 80, 255);
-  print br, submit(-value => 'Submit'), '&nbsp;' x 20, reset, '&nbsp;' x 20,
+  print textfield('tags', join(', ', $old->tagList), 80);
+  print br, submit(-value => 'Save'), '&nbsp;' x 20, reset, '&nbsp;' x 20,
    a({-href => modeLink 'back'}, 'Back'), end_form;
  }
 } elsif ($mode eq 'tag') {
@@ -110,11 +112,11 @@ if ($mode eq 'edit') {
    tags => [ parseTagList param('tags') ]);
   print p('Note created'), p(a({-href => modeLink 'back'}, 'Back'));
  } else {
-  print start_form(-action => url(-relative => 1, -query => 1));
+  print start_form(-action => modeLink 'new');
   print textfield('title', '', 80, 255);
   print br, tt(textarea('contents', '', 10, 80)), br;
-  print textfield('tags', '', 80, 255);
-  print br, submit(-value => 'Submit'), '&nbsp;' x 20, a({-href =>
+  print textfield('tags', '', 80);
+  print br, submit(-value => 'Save'), '&nbsp;' x 20, a({-href =>
    modeLink 'back'}, 'Back'), end_form;
  }
 } elsif ($mode eq 'del') {
@@ -123,7 +125,7 @@ if ($mode eq 'edit') {
   print p('Note deleted'), p(a({-href => modeLink 'back'}, 'Back'));
  } else {
   print p('Are you sure you want to delete this note?');
-  print start_form(-action => url(-relative => 1, -query => 1));
+  print start_form(-action => modeLink($mode, $modeArg));
   print p(submit('decision', 'Yes'), '&nbsp;' x 20, submit('decision', 'No'));
   print end_form;
   printNote(fetchNote $modeArg);
@@ -132,7 +134,7 @@ if ($mode eq 'edit') {
  }
 } else { map { printNote(fetchNote $_) } getAllNoteIDs }
 
-print p(a({-href => url(-relative => 1)}, 'All notes'), '|',
+print p(a({-href => modeLink 'all'}, 'All notes'), '|',
  a({-href => modeLink 'new'}, 'New note'));
 
 print end_td, start_td({-class => 'tagList'});

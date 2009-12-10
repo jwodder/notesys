@@ -21,13 +21,14 @@ a:visited {color: #0000ff; }
 table {font-size: 15px; }
 td {vertical-align: top; }
 ul {list-style-type: disc; }
-li {margin-bottom: 5px; }
+li {margin-bottom: 3px; }
 p {text-align: justify; }
 
 pre {
  font-size: 10px;
  font-family: monaco, courier, monospace;
  background-color: #e8e8e8;
+ /*width: 80em;*/
 }
 
 p.totals {font-size: 10px; text-align: right; } /* Note & tag quantities */
