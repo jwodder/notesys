@@ -10,10 +10,12 @@ require Exporter;
 our @ISA = ('Exporter');
 our $VERSION = v1.0;
 our @EXPORT = qw< connectDB abandonDB disconnectDB countNotes countTags
- fetchNote getTaggedNoteIDs getAllNoteIDs getChildNoteIDs updateNote deleteNote
- createNote getTagsAndQtys getNoteTreeHash attachNote detachNote topLevelNotes
- getInternalDates >;
-our @EXPORT_OK = qw< createDB >;
+ fetchNote getTaggedNoteIDs getAllNoteIDs updateNote deleteNote createNote
+ getTagsAndQtys getInternalDates >;
+our @EXPORT_OK = qw< createDB getChildNoteIDs getNoteTreeHash attachNote
+ detachNote topLevelNotes >;
+our %EXPORT_TAGS = (hier => [qw< getChildNoteIDs getNoteTreeHash attachNote
+ detachNote topLevelNotes >]);
 use POSIX 'strftime';
 use DBI;
 

@@ -9,11 +9,18 @@ my $dbfile = '/Library/WebServer/Documents/db/notes.db';
 
 binmode STDOUT, ':encoding(UTF-8)';
 
-my %modeHash = (new => 0, back => 0, edit => 1, del => 1, tag => 1);
+# This whole 'mode' system may be overkill, but it allows the code for
+# switching between modes to be neatly encapsulated into one place from which
+# it can be easily modified, e.g., to use Apache URL rewriting instead of query
+# strings.
+use constant {MODE_INTARG => 1, MODE_TEXTARG => 2};
+my %modeHash = (new => 0, back => 0, edit => MODE_INTARG, del => MODE_INTARG,
+ tag => MODE_TEXTARG);
 my $mode = url_param('mode');
 my $modeArg = url_param('arg');
 $mode = 'all' if !defined $mode || !exists $modeHash{$mode}
- || $modeHash{$mode} == 1 && (!defined $modeArg || $modeArg eq '');
+ || $modeHash{$mode} != 0 && (!defined $modeArg || $modeArg eq ''
+ || $modeHash{$mode} & MODE_INTARG && $modeArg !~ /^\d+$/);
 
 sub modeLink($;$) {
  my($mode, $arg) = @_;
@@ -64,6 +71,7 @@ sub wrapLine($;$) {
 
 sub printNote($) {
  my $note = shift;
+ return if !defined $note;
  print start_div({-class => 'noteBlock'}), b(escapeHTML($note->title)); 
  print ' ', span({-class => 'editDel'}, a({-href => modeLink('edit',
   $note->idno)}, 'Edit') . '&nbsp;' . a({-href => modeLink('del',
@@ -91,7 +99,10 @@ print p(a({-href => modeLink 'all'}, 'All notes'), '|',
 
 if ($mode eq 'edit') {
  my $old = fetchNote $modeArg;
- if (defined param('title')) {
+ if (!defined $old) {
+  print p("There is no note #$modeArg....");
+  print p(a({-href => modeLink 'back'}, 'Back'));
+ } elsif (defined param('title')) {
   my $new = new Note idno => $old->idno, title => param('title'),
    contents => param('contents'), tags => [ parseTagList param('tags') ];
   updateNote($old, $new);
@@ -105,7 +116,9 @@ if ($mode eq 'edit') {
    a({-href => modeLink 'back'}, 'Back'), end_form;
  }
 } elsif ($mode eq 'tag') {
- map { printNote(fetchNote $_) } getTaggedNoteIDs $modeArg
+ my @notes = getTaggedNoteIDs $modeArg;
+ if (@notes) { map { printNote(fetchNote $_) } @notes }
+ else { print p("There's nothing here.") }
 } elsif ($mode eq 'new') {
  if (defined param('title')) {
   createNote(new Note title => param('title'), contents => param('contents'),
@@ -124,15 +137,25 @@ if ($mode eq 'edit') {
   deleteNote $modeArg;
   print p('Note deleted'), p(a({-href => modeLink 'back'}, 'Back'));
  } else {
-  print p('Are you sure you want to delete this note?');
-  print start_form(-action => modeLink($mode, $modeArg));
-  print p(submit('decision', 'Yes'), '&nbsp;' x 20, submit('decision', 'No'));
-  print end_form;
-  printNote(fetchNote $modeArg);
-   # The 'edit' and/or 'delete' links should probably be omitted when
-   # displaying the note here.
+  my $delee = fetchNote $modeArg;
+  if (!defined $delee) {
+   print p("There is no note #$modeArg....");
+   print p(a({-href => modeLink 'back'}, 'Back'));
+  } else {
+   print p('Are you sure you want to delete this note?');
+   print start_form(-action => modeLink($mode, $modeArg));
+   print p(submit('decision', 'Yes'), '&nbsp;' x 20, submit('decision', 'No'));
+   print end_form;
+   printNote $delee;
+    # The 'edit' and/or 'delete' links should probably be omitted when
+    # displaying the note here.
+  }
  }
-} else { map { printNote(fetchNote $_) } getAllNoteIDs }
+} else {
+ my @notes = getAllNoteIDs;
+ if (@notes) { map { printNote(fetchNote $_) } @notes }
+ else { print p("There's nothing here.") }
+}
 
 print p(a({-href => modeLink 'all'}, 'All notes'), '|',
  a({-href => modeLink 'new'}, 'New note'));

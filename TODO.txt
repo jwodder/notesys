@@ -12,8 +12,6 @@
   - auto-completion of tag names
   - collapsing the contents of a displayed note
  - Make the <title> change depending on what is being viewed
- - Handle having no notes to display (either from selecting a nonexistent tag
-   or from viewing an empty database)
  - When editing a note, increase the number of lines in the <textarea> based on
    the number of lines in the note (though with some upper limit so as to avoid
    incredibly large <textarea>s)
@@ -22,8 +20,7 @@
  - Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
  - Make createNote, updateNote, and deleteNote handle hierarchy information
    (deleteNote by detaching child notes)
-- Improve the error handling?
-- Handle invalid and/or nonexistent note IDs
+- Give warnings for attempted deletion of nonexistent note IDs
 - Improve the sorting of notes when retrieving by tag
 - Add a way for the user to configure how notes are sorted
 - Tags:
