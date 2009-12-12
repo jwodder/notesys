@@ -11,7 +11,7 @@ our @ISA = ('Exporter');
 our $VERSION = v1.0;
 our @EXPORT = qw< connectDB abandonDB disconnectDB countNotes countTags
  fetchNote getTaggedNoteIDs getAllNoteIDs updateNote deleteNote createNote
- getTagsAndQtys getInternalDates >;
+ getTagsAndQtys getInternalDates noteExists >;
 our @EXPORT_OK = qw< createDB getChildNoteIDs getNoteTreeHash attachNote
  detachNote topLevelNotes >;
 our %EXPORT_TAGS = (hier => [qw< getChildNoteIDs getNoteTreeHash attachNote
@@ -190,6 +190,11 @@ sub getInternalDates($) {
  # the prettified form used by fetchNote
  $db->selectrow_array('SELECT created, edited FROM notes WHERE idno=?', {}, @_)
  # Should this statement be prepared?
+}
+
+sub noteExists($) {
+ ($db->selectrow_array('SELECT EXISTS (SELECT idno FROM notes WHERE idno=?)',
+  {}, @_))[0]
 }
 
 

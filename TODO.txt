@@ -20,7 +20,6 @@
  - Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
  - Make createNote, updateNote, and deleteNote handle hierarchy information
    (deleteNote by detaching child notes)
-- Give warnings for attempted deletion of nonexistent note IDs
 - Improve the sorting of notes when retrieving by tag
 - Add a way for the user to configure how notes are sorted
 - Tags:
@@ -40,3 +39,7 @@
 - Add an explicit license to the code
 - Add a README file, including instructions on how to set the system up
 - Add function documentation to NoteSys.pm
+- Moving checking of things like whether the parent note in an attachNote()
+  call exists to NoteSys.pm
+- Make 'Back' links take you to ?mode=note queries and add 'Back' links to the
+  bottom of the output from ?mode=note queries (both successful & failed)

@@ -3,9 +3,9 @@ use strict;
 use CGI qw< :standard start_table start_Tr start_td start_div start_ul >;
 use CGI::Carp 'fatalsToBrowser';
 use URI::Escape 'uri_escape_utf8';
-use NoteSys;
+use NoteSys qw< :DEFAULT :hier >;
 
-my $dbfile = '/Library/WebServer/Documents/db/notes.db';
+my $dbfile = '/Library/WebServer/Documents/db/notesHier.db';
 
 binmode STDOUT, ':encoding(UTF-8)';
 
@@ -13,14 +13,16 @@ binmode STDOUT, ':encoding(UTF-8)';
 # switching between modes to be neatly encapsulated into one place from which
 # it can be easily modified, e.g., to use Apache URL rewriting instead of query
 # strings.
-use constant {MODE_INTARG => 1, MODE_TEXTARG => 2};
-my %modeHash = (new => 0, back => 0, edit => MODE_INTARG, del => MODE_INTARG,
- tag => MODE_TEXTARG);
+use constant {MODE_INTARG => 1, MODE_TEXTARG => 2, MODE_INTPAIR => 3};
+my %modes = (new => 0, back => 0, edit => MODE_INTARG, del => MODE_INTARG,
+ tag => MODE_TEXTARG, detach => MODE_INTARG, attach => MODE_INTPAIR,
+ note => MODE_INTARG);
 my $mode = url_param('mode');
 my $modeArg = url_param('arg');
-$mode = 'all' if !defined $mode || !exists $modeHash{$mode}
- || $modeHash{$mode} != 0 && (!defined $modeArg || $modeArg eq ''
- || $modeHash{$mode} & MODE_INTARG && $modeArg !~ /^\d+$/);
+$mode = 'all' if !defined $mode || !exists $modes{$mode} || $modes{$mode} != 0
+ && (!defined $modeArg || $modeArg eq ''
+     || $modes{$mode} == MODE_INTARG && $modeArg !~ /^\d+$/
+     || $modes{$mode} == MODE_INTPAIR && $modeArg !~ /^\d+,\d+$/);
 
 sub modeLink($;$) {
  my($mode, $arg) = @_;
@@ -134,8 +136,9 @@ if ($mode eq 'edit') {
  }
 } elsif ($mode eq 'del') {
  if (defined param('decision') && param('decision') eq 'Yes') {
-  deleteNote $modeArg;
-  print p('Note deleted'), p(a({-href => modeLink 'back'}, 'Back'));
+  if (!noteExists($modeArg)) { print p("There is no note #$modeArg....") }
+  else {deleteNote $modeArg; print p('Note deleted'); }
+  print p(a({-href => modeLink 'back'}, 'Back'));
  } else {
   my $delee = fetchNote $modeArg;
   if (!defined $delee) {
@@ -151,6 +154,30 @@ if ($mode eq 'edit') {
     # displaying the note here.
   }
  }
+} elsif ($mode eq 'attach') {
+ my($parent, $child) = split /,/, $modeArg;
+ if (!noteExists($parent)) { print p("There is no note #$parent....") }
+ elsif (!noteExists($child)) { print p("There is no note #$child....") }
+ else {
+  attachNote($parent, $child);
+  print p('Note #' . a({-href => modeLink('note', $child)}, $child)
+   . ' was attached to note #' . a({-href => modeLink('note', $parent)},
+   $parent));
+ }
+ print p(a({-href => modeLink 'back'}, 'Back'));
+} elsif ($mode eq 'detach') {
+ if (!noteExists($modeArg)) { print p("There is no note #$modeArg....") }
+ else {
+  detachNote $modeArg;
+  print p('Note #' . a({-href => modeLink('note', $modeArg)}, $modeArg)
+   . ' was detached from its parent note.');
+  # Add in a link to $modeArg's former parent.
+ }
+ print p(a({-href => modeLink 'back'}, 'Back'));
+} elsif ($mode eq 'note') {
+ my $note = fetchNote $modeArg;
+ if (!defined $note) { print p("There is no note #$modeArg....") }
+ else { printNote $note }
 } else {
  my @notes = getAllNoteIDs;
  if (@notes) { map { printNote(fetchNote $_) } @notes }
