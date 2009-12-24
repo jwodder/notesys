@@ -2,6 +2,7 @@
 use strict;
 use CGI qw< :standard start_table start_Tr start_td start_div start_ul >;
 use CGI::Carp 'fatalsToBrowser';
+use Regexp::Common 'URI';
 use URI::Escape 'uri_escape_utf8';
 use NoteSys;
 
@@ -76,8 +77,12 @@ sub printNote($) {
  print ' ', span({-class => 'editDel'}, a({-href => modeLink('edit',
   $note->idno)}, 'Edit') . '&nbsp;' . a({-href => modeLink('del',
   $note->idno)}, 'Delete'));
- print pre(join "\n", map { escapeHTML $_ } map { wrapLine($_, 80) }
-  split /\n/, $note->contents) if $note->contents ne '';
+ print pre(join '',
+  map { /$RE{URI}/ ? a({-href => escapeHTML $_}, escapeHTML $_)
+   # Is escaping the URL in the HREF necessary and/or desirable?
+   : escapeHTML $_ }
+  split /($RE{URI})/, join "\n", map { wrapLine($_, 80) } split /\n/,
+  $note->contents) if $note->contents ne '';
  print p({-class => 'tags'}, join ', ', map {
   a({-href => modeLink('tag', $_)}, escapeHTML($_))
  } $note->tagList);
