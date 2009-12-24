@@ -3,7 +3,6 @@
  - Get the <textarea> contents to actually be monospaced in Safari (It works in
    Firefox.)
  - Strip the CRs from CRLFs in POSTed 'contents' fields?
- - Find & make URLs active when displaying notes
  - When listing large amounts of notes, break the list up into several pages
    (100 notes to a page?)
  - Redirect warnings to the browser?
@@ -15,6 +14,8 @@
  - When editing a note, increase the number of lines in the <textarea> based on
    the number of lines in the note (though with some upper limit so as to avoid
    incredibly large <textarea>s)
+ - Handle overly long URLs that (currently) have linebreaks inserted in them
+   before being checked for URL-ness
 - Implement hierarchic to-do items
  - Add ways to manipulate the hierarchy to the web interface
  - Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
@@ -39,6 +40,7 @@
 - Add an explicit license to the code
 - Add a README file, including instructions on how to set the system up
 - Add function documentation to NoteSys.pm
+- Make the NoteSys.pm functions into methods of a database connection object?
 - Make NoteSys.pm check whether the notes referenced in arguments to functions
   exist
 - Make 'Back' links take you to ?mode=note queries and add 'Back' links to the
