@@ -33,8 +33,8 @@
  - Add a way to do batch operations like deleting or renaming all occurrences
    of a tag and replacing or augmenting all occurrences of a tag with one or
    more other tags
-- Prevent characters like newlines & tabs from appearing in titles and tag
-  names
+- Prevent control characters from appearing in titles, tag names, and note
+  bodies
 - Test out the programs in util/
  - Make sure loadDB.pl handles Unicode input properly
 - Create a curses-based interface to the database?
@@ -42,3 +42,7 @@
 - Add a README file, including instructions on how to set the system up
 - Add function documentation to NoteSys.pm
 - Make the NoteSys.pm functions into methods of a database connection object?
+- Make NoteSys.pm check whether the notes referenced in arguments to functions
+  exist
+- Make 'Back' links take you to ?mode=note queries and add 'Back' links to the
+  bottom of the output from ?mode=note queries (both successful & failed)

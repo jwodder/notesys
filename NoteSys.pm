@@ -87,7 +87,7 @@ sub fetchNote($) { # Create the Note object for the given ID
 }
 
 sub getTaggedNoteIDs($) { # Returns the note IDs with the given tag
- @{$db->selectcol_arrayref($getTaggedNotes, {}, $_[0])}
+ @{$db->selectcol_arrayref($getTaggedNotes, {}, cleanLabel($_[0]))}
 }
 
 sub getAllNoteIDs() {
@@ -99,16 +99,17 @@ sub getChildNoteIDs($) { @{$db->selectcol_arrayref($getChildren, {}, $_[0])} }
 sub updateNote($$) {
  # Rewrite this so that only changed fields are updated.
  my($old, $new) = @_;
- my %oldTags = map { $_ => 0 } $old->tagList;
+ my %oldTags = map { cleanLabel($_) => 0 } $old->tagList;
  for ($new->tagList) {
-  if (exists $oldTags{$_}) { $oldTags{$_}++ }
-  else { $addTag->execute($old->idno, $_) }
+  my $t = cleanLabel($_);
+  if (exists $oldTags{$t}) { $oldTags{$t}++ }
+  else { $addTag->execute($old->idno, $t) }
  }
  while (($tag, $kept) = each %oldTags) {
   $delTag->execute($old->idno, $tag) if !$kept
  }
  $db->do('UPDATE notes SET title=?, contents=?, edited=CURRENT_TIMESTAMP' .
-  ' WHERE idno=?', {}, $new->title, $new->contents, $old->idno);
+  ' WHERE idno=?', {}, cleanLabel($new->title), $new->contents, $old->idno);
 }
 
 sub deleteNote($) {
@@ -122,14 +123,14 @@ sub createNote($) { # Returns the ID of the new note
  # Should these statements be prepared?
  if (defined $new->created || defined $new->edited) {
   $db->do('INSERT INTO notes (title, contents, created, edited) VALUES (?, ?,' .
-   ' ?, ?)', {}, $new->title, $new->contents, $new->created || $new->edited,
-   $new->edited || $new->created)
+   ' ?, ?)', {}, cleanLabel($new->title), $new->contents,
+   $new->created || $new->edited, $new->edited || $new->created)
  } else {
-  $db->do('INSERT INTO notes (title, contents) VALUES (?, ?)', {}, $new->title,
-   $new->contents)
+  $db->do('INSERT INTO notes (title, contents) VALUES (?, ?)', {},
+   cleanLabel($new->title), $new->contents)
  }
  my $newid = $db->last_insert_id(undef, undef, 'notes', undef);
- $addTag->execute($newid, $_) for $new->tagList;
+ $addTag->execute($newid, cleanLabel($_)) for $new->tagList;
  return $newid;
 }
 
@@ -190,6 +191,13 @@ sub getInternalDates($) {
  # the prettified form used by fetchNote
  $db->selectrow_array('SELECT created, edited FROM notes WHERE idno=?', {}, @_)
  # Should this statement be prepared?
+}
+
+sub cleanLabel($) {
+ # not exported; called on titles & tags to rid them of undesirable characters
+ (my $str = shift) =~ s/\s+/ /g;
+ $str =~ s/^\s|\s$//g;
+ return $str;
 }
 
 
