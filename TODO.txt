@@ -31,15 +31,15 @@
  - Add a way to do batch operations like deleting or renaming all occurrences
    of a tag and replacing or augmenting all occurrences of a tag with one or
    more other tags
-- Prevent characters like newlines & tabs from appearing in titles and tag
-  names
+- Prevent control characters from appearing in titles, tag names, and note
+  bodies
 - Test out the programs in util/
  - Make sure loadDB.pl handles Unicode input properly
 - Create a curses-based interface to the database?
 - Add an explicit license to the code
 - Add a README file, including instructions on how to set the system up
 - Add function documentation to NoteSys.pm
-- Moving checking of things like whether the parent note in an attachNote()
-  call exists to NoteSys.pm
+- Make NoteSys.pm check whether the notes referenced in arguments to functions
+  exist
 - Make 'Back' links take you to ?mode=note queries and add 'Back' links to the
   bottom of the output from ?mode=note queries (both successful & failed)
