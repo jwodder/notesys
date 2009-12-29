@@ -7,7 +7,7 @@
    (100 notes to a page?)
  - Redirect warnings to the browser?
  - Add fancy JavaScript stuff:
-  - editing notes directly in the listings
+  - editing notes (both text & tag lists) directly in the listings
   - auto-completion of tag names
   - collapsing the contents of a displayed note
  - Make the <title> change depending on what is being viewed
@@ -37,7 +37,6 @@
   bodies
 - Test out the programs in util/
  - Make sure loadDB.pl handles Unicode input properly
-- Create a curses-based interface to the database?
 - Add an explicit license to the code
 - Add a README file, including instructions on how to set the system up
 - Add function documentation to NoteSys.pm
@@ -46,3 +45,6 @@
   exist
 - Make 'Back' links take you to ?mode=note queries and add 'Back' links to the
   bottom of the output from ?mode=note queries (both successful & failed)
+- Advanced ideas:
+ - Create a curses-based notesys interface
+ - Make it possible to synchronize notesys databases across a network
