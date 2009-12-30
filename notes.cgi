@@ -54,7 +54,7 @@ print header(-type => 'text/html; charset=UTF-8', @cookies), start_html(-title
  'notes.css'}, -head => Link({-rel => 'icon', -type => 'text/png', -href =>
  'notes.png'}), -script => <<EOJS);
 function noteWin(idno) {
- window.open("@{[ url ]}?mode=note&arg=' + idno, 'noteWin');
+ window.open('@{[ url ]}?mode=note&arg=' + idno, 'noteWin');
 }
 EOJS
 # Yes, specifying the encoding twice is necessary so that CGI.pm will send the
@@ -184,15 +184,17 @@ if ($mode eq 'edit') {
   my $orphan = fetchNote $modeArg;
   if (!defined $orphan) { print p("There is no note #$modeArg....") }
   else {
+   # Check whether $orphan is currently attached to anything else.
    my @ids = grep { $_ != $modeArg } getAllNoteIDs;
+   # Should the note IDs be fetched in a different order than usual?
    if (@ids) {
     print p('What would you like to attach this note to?');
     print start_form(-action => modeLink($mode, $modeArg));
     print popup_menu('parent', \@ids, $ids[0], {
       map { $_ => Note::title fetchNote($_) } @ids
      });
-    print p(button(-value => 'View', -onClick => 'noteWin(this.parentNode.'
-     . 'parentNode.getElementsByTagName("select")[0].value);'),
+    print p(button(-value => 'View', -onClick =>
+     'noteWin(document.getElementsByTagName("select")[0].value);'),
      '&nbsp;' x 20, submit(-value => 'Attach'));
     print end_form;
     printNote $orphan;
