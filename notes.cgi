@@ -14,16 +14,17 @@ binmode STDOUT, ':encoding(UTF-8)';
 # switching between modes to be neatly encapsulated into one place from which
 # it can be easily modified, e.g., to use Apache URL rewriting instead of query
 # strings.
-use constant {MODE_INTARG => 1, MODE_TEXTARG => 2, MODE_INTPAIR => 3};
+use constant {MODE_INTARG => 1, MODE_TEXTARG => 2}; # MODE_INTPAIR => 3
 my %modes = (new => 0, back => 0, edit => MODE_INTARG, del => MODE_INTARG,
- tag => MODE_TEXTARG, detach => MODE_INTARG, attach => MODE_INTPAIR,
+ tag => MODE_TEXTARG, detach => MODE_INTARG, attach => MODE_INTARG,
  note => MODE_INTARG);
 my $mode = url_param('mode');
 my $modeArg = url_param('arg');
 $mode = 'all' if !defined $mode || !exists $modes{$mode} || $modes{$mode} != 0
  && (!defined $modeArg || $modeArg eq ''
      || $modes{$mode} == MODE_INTARG && $modeArg !~ /^\d+$/
-     || $modes{$mode} == MODE_INTPAIR && $modeArg !~ /^\d+,\d+$/);
+   # || $modes{$mode} == MODE_INTPAIR && $modeArg !~ /^\d+,\d+$/
+     );
 
 sub modeLink($;$) {
  my($mode, $arg) = @_;
@@ -51,7 +52,11 @@ if ($mode eq 'all') {
 print header(-type => 'text/html; charset=UTF-8', @cookies), start_html(-title
  => 'Notes', -encoding => 'UTF-8', -declare_xml => 1, -style => {-src =>
  'notes.css'}, -head => Link({-rel => 'icon', -type => 'text/png', -href =>
- 'notes.png'}));
+ 'notes.png'}), -script => <<EOJS);
+function noteWin(idno) {
+ window.open("@{[ url ]}?mode=note&arg=' + idno, 'noteWin');
+}
+EOJS
 # Yes, specifying the encoding twice is necessary so that CGI.pm will send the
 # correct headers and so that the in-document charset information agrees with
 # said headers.
@@ -160,14 +165,39 @@ if ($mode eq 'edit') {
   }
  }
 } elsif ($mode eq 'attach') {
- my($parent, $child) = split /,/, $modeArg;
- if (!noteExists($parent)) { print p("There is no note #$parent....") }
- elsif (!noteExists($child)) { print p("There is no note #$child....") }
- else {
-  attachNote($parent, $child);
-  print p('Note #' . a({-href => modeLink('note', $child)}, $child)
-   . ' was attached to note #' . a({-href => modeLink('note', $parent)},
-   $parent));
+ if (defined param('parent')) {
+  if (param('parent') eq $modeArg) {
+   print p("I'm sorry, but this is a Möbius-free zone.")
+  } else {
+   my $parent = param('parent');
+   my $child = $modeArg;
+   if (!noteExists($parent)) { print p("There is no note #$parent....") }
+   elsif (!noteExists($child)) { print p("There is no note #$child....") }
+   else {
+    attachNote($parent, $child);
+    print p('Note #' . a({-href => modeLink('note', $child)}, $child)
+     . ' was attached to note #' . a({-href => modeLink('note', $parent)},
+     $parent));
+   }
+  }
+ } else {
+  my $orphan = fetchNote $modeArg;
+  if (!defined $orphan) { print p("There is no note #$modeArg....") }
+  else {
+   my @ids = grep { $_ != $modeArg } getAllNoteIDs;
+   if (@ids) {
+    print p('What would you like to attach this note to?');
+    print start_form(-action => modeLink($mode, $modeArg));
+    print popup_menu('parent', \@ids, $ids[0], {
+      map { $_ => Note::title fetchNote($_) } @ids
+     });
+    print p(button(-value => 'View', -onClick => 'noteWin(this.parentNode.'
+     . 'parentNode.getElementsByTagName("select")[0].value);'),
+     '&nbsp;' x 20, submit(-value => 'Attach'));
+    print end_form;
+    printNote $orphan;
+   } else { print p("There's nothing to attach to!") }
+  }
  }
  print p(a({-href => modeLink 'back'}, 'Back'));
 } elsif ($mode eq 'detach') {
