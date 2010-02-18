@@ -47,27 +47,32 @@ if ($mode eq 'all') {
 }
 
 print header(-type => 'text/html; charset=UTF-8', @cookies), start_html(-title
- => 'Notes', -encoding => 'UTF-8', -declare_xml => 1, -style => {-src =>
- 'notes.css'}, -head => Link({-rel => 'icon', -type => 'text/png', -href =>
- 'notes.png'}));
+ => $mode eq 'tag' ? "Notes \x{2014} $modeArg" : 'Notes', -encoding => 'UTF-8',
+ -declare_xml => 1, -style => {-src => 'notes.css'}, -head => Link({-rel =>
+ 'icon', -type => 'text/png', -href => 'notes.png'}));
 # Yes, specifying the encoding twice is necessary so that CGI.pm will send the
 # correct headers and so that the in-document charset information agrees with
 # said headers.
 
 connectDB $dbfile;
 
-sub wrapLine($;$) {
+sub wrapLines($;$) {
  my $str = shift;
  my $len = shift || 80;
  $str =~ s/\s+$//;
- my @lines = ();
- while (length $str > $len) {
-  if (reverse(substr $str, 0, $len) =~ /\s+/) {
-   push @lines, substr $str, 0, $len - $+[0], ''
-  } else { push @lines, substr $str, 0, $len, '' }
-  $str =~ s/^\s+//;
- }
- return (@lines, $str);
+ map {
+  my @lines = ();
+  while (length > $len && /\s+/) {
+   if (reverse (substr $_, 0, $len + 1) =~ /\s+/) {
+    # Adding one to the length causes a space immediately after the first $len
+    # characters to be taken into account.
+    push @lines, substr $_, 0, $len + 1 - $+[0], ''
+   } else { /\s+/ && push @lines, substr $_, 0, $-[0], '' }
+   s/^\s+//;
+  }
+  if ($_ ne '') { (@lines, $_) }
+  else { @lines }
+ } split /\n/, $str;
 }
 
 sub printNote($) {
@@ -81,8 +86,8 @@ sub printNote($) {
   map { /$RE{URI}/ ? a({-href => escapeHTML $_}, escapeHTML $_)
    # Is escaping the URL in the HREF necessary and/or desirable?
    : escapeHTML $_ }
-  split /($RE{URI})/, join "\n", map { wrapLine($_, 80) } split /\n/,
-  $note->contents) if $note->contents ne '';
+  split /($RE{URI})/, join "\n", map { wrapLines($_, 80) } $note->contents)
+  if $note->contents ne '';
  print p({-class => 'tags'}, join ', ', map {
   a({-href => modeLink('tag', $_)}, escapeHTML($_))
  } $note->tagList);

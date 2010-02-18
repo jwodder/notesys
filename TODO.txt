@@ -16,6 +16,8 @@
    incredibly large <textarea>s)
  - Handle overly long URLs that (currently) have linebreaks inserted in them
    before being checked for URL-ness
+ - Make the confirmation pages automatically redirect you to ?back after a
+   certain amount of time
 - Implement hierarchic to-do items
  - Add ways to manipulate the hierarchy to the web interface
  - Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
@@ -43,8 +45,9 @@
 - Make the NoteSys.pm functions into methods of a database connection object?
 - Make NoteSys.pm check whether the notes referenced in arguments to functions
   exist
-- Make 'Back' links take you to ?mode=note queries and add 'Back' links to the
-  bottom of the output from ?mode=note queries (both successful & failed)
 - Advanced ideas:
  - Create a curses-based notesys interface
  - Make it possible to synchronize notesys databases across a network
+- Trim trailing whitespace from note bodies
+- Make cleanLabel() handle non-ASCII characters properly
+- Make the dumping & loading programs export & import notes as JSON?
