@@ -1,6 +1,8 @@
 - Implement hierarchic notes in the web interface
- - Make note listings display hierarchy information and omit non-top level
-   notes
+ - Make note listings display hierarchy information
+  - The number of descendents (or just direct children?) should be displayed
+    for all notes that have any.
+  - Notes with parents should have links to them.
  - Add a user confirmation step to detaching notes
  - When viewing an individual note, add a link to its parent if it has one.
  - Truncate long note titles when listing them in the 'attach' page
@@ -8,6 +10,10 @@
    notes involved by their (possibly truncated) titles rather than their ID
    numbers
  - Make the confirmation page for detaching notes refer to the former parent
+ - Make the 'all' note listing show only top-level notes
+ - Make note listings by tag only show the topmost notes with those tags
+  - A note with the given tag that has $x descendents, of which $y also have
+    the tag, should be labelled along the lines of "($y/$x descendents)"
 - Web interface-specific:
  - Add more/better styles
  - Get the <textarea> contents to actually be monospaced in Safari (It works in

@@ -82,6 +82,8 @@ sub printNote($) {
  return if !defined $note;
  print start_div({-class => 'noteBlock'}), b(escapeHTML($note->title)); 
  my @utilLinks = ();
+ push @utilLinks, a({-href => modeLink('note', $note->idno)}, 'View')
+  if $mode ne 'note';
  push @utilLinks, a({-href => modeLink('edit', $note->idno)}, 'Edit')
   if $mode ne 'edit';
  push @utilLinks, a({-href => modeLink('detach', $note->idno)}, 'Detach')
@@ -221,7 +223,17 @@ if ($mode eq 'edit') {
 } elsif ($mode eq 'note') {
  my $note = fetchNote $modeArg;
  if (!defined $note) { print p("There is no note #$modeArg....") }
- else { printNote $note }
+ else {
+  printNote $note;
+  my @children = $note->children;
+  if (@children == 1) {
+   print div({-class => 'childQty'}, '1 Child:');
+   printNote $children[0];
+  } elsif (@children > 1) {
+   print div({-class => 'childQty'}, scalar @children . ' Children:');
+   printNote $_ for @children;
+  }
+ }
 } else {
  my @notes = getAllNoteIDs;
  if (@notes) { map { printNote(fetchNote $_) } @notes }

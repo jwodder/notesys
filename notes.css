@@ -42,6 +42,8 @@ p.timestamp {font-size: 10px; margin: 0px; }
 .tagList {font-size: 10px; }
  /* Complete listing of all tags on the side of the page */
 
+div.childQty {font-size: 16px; font-weight: bold; margin-bottom: 2ex; }
+
 /* These may be useful later:
 fieldset {padding: 5px; }
 hr {width: 450px; height: 2px; text-align: center; }
