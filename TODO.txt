@@ -13,17 +13,16 @@
  - Make the <title> change depending on what is being viewed
  - When editing a note, increase the number of lines in the <textarea> based on
    the number of lines in the note (though with some upper limit so as to avoid
-   incredibly large <textarea>s)
- - Handle overly long URLs that (currently) have linebreaks inserted in them
-   before being checked for URL-ness
+   incredibly large <textarea>'s)
  - Make the confirmation pages automatically redirect you to ?back after a
    certain amount of time
+ - Make it possible to specify notes to hide/not show by default?
 - Implement hierarchic to-do items
  - Add ways to manipulate the hierarchy to the web interface
  - Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
  - Make createNote, updateNote, and deleteNote handle hierarchy information
    (deleteNote by detaching child notes)
-- Give warnings for attempted deletion of nonexistent note IDs
+- Give warnings for attempted deletions of nonexistent note IDs
 - Improve the sorting of notes when retrieving by tag
 - Add a way for the user to configure how notes are sorted
 - Tags:
@@ -35,8 +34,6 @@
  - Add a way to do batch operations like deleting or renaming all occurrences
    of a tag and replacing or augmenting all occurrences of a tag with one or
    more other tags
-- Prevent control characters from appearing in titles, tag names, and note
-  bodies
 - Test out the programs in util/
  - Make sure loadDB.pl handles Unicode input properly
 - Add an explicit license to the code
@@ -48,6 +45,10 @@
 - Advanced ideas:
  - Create a curses-based notesys interface
  - Make it possible to synchronize notesys databases across a network
+ - Make the system multi-user
+- Prevent control characters from appearing in titles, tag names, and note
+  bodies
 - Trim trailing whitespace from note bodies
 - Make cleanLabel() handle non-ASCII characters properly
-- Make the dumping & loading programs export & import notes as JSON?
+- Make the dumping & loading programs export & import notes as JSON (instead of
+  or in addition to the format currently used?)

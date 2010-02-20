@@ -211,7 +211,10 @@ use overload '""' => 'idno';
 # This ^^ should allow one to pass a Note object instead of a note ID to a
 # NoteSys function without any problems.
 
-sub children { map { fetchNote $_ } getChildNoteIDs($_[0]->idno) }
+sub children {
+ map { NoteSys::fetchNote $_ } NoteSys::getChildNoteIDs($_[0]->idno)
+}
+
 sub tagList { @{$_[0]->tags} }
 
 1;
