@@ -1,9 +1,13 @@
 - Implement hierarchic notes in the web interface
- - Make note listings display hierarchy information
- - Add links to 'Detach' and 'Attach' pages
- - Add a confirmation step to detaching notes
+ - Make note listings display hierarchy information and omit non-top level
+   notes
+ - Add a user confirmation step to detaching notes
  - When viewing an individual note, add a link to its parent if it has one.
  - Truncate long note titles when listing them in the 'attach' page
+ - Make the confirmation pages for attaching & detaching notes refer to the
+   notes involved by their (possibly truncated) titles rather than their ID
+   numbers
+ - Make the confirmation page for detaching notes refer to the former parent
 - Web interface-specific:
  - Add more/better styles
  - Get the <textarea> contents to actually be monospaced in Safari (It works in
@@ -22,6 +26,12 @@
    incredibly large <textarea>s)
  - Handle overly long URLs that (currently) have linebreaks inserted in them
    before being checked for URL-ness
+ - Replace the "note edited" and "note created" confirmation pages with
+   redirects to the individual notes' pages
+ - Make 'Back' links take you to ?mode=note queries and add 'Back' links to the
+   bottom of the output from ?mode=note queries (both successful & failed)
+  - Make 'Back' links somehow ignore notes accessed via the attachment preview
+    button
 - Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
 - Make createNote, updateNote, and deleteNote handle hierarchy information
   (deleteNote by detaching child notes)
@@ -47,5 +57,3 @@
 - Make the NoteSys.pm functions into methods of a database connection object?
 - Make NoteSys.pm check whether the notes referenced in arguments to functions
   exist
-- Make 'Back' links take you to ?mode=note queries and add 'Back' links to the
-  bottom of the output from ?mode=note queries (both successful & failed)

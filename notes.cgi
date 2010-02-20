@@ -81,9 +81,16 @@ sub printNote($) {
  my $note = shift;
  return if !defined $note;
  print start_div({-class => 'noteBlock'}), b(escapeHTML($note->title)); 
- print ' ', span({-class => 'editDel'}, a({-href => modeLink('edit',
-  $note->idno)}, 'Edit') . '&nbsp;' . a({-href => modeLink('del',
-  $note->idno)}, 'Delete'));
+ my @utilLinks = ();
+ push @utilLinks, a({-href => modeLink('edit', $note->idno)}, 'Edit')
+  if $mode ne 'edit';
+ push @utilLinks, a({-href => modeLink('detach', $note->idno)}, 'Detach')
+  if defined $note->parent() && $mode ne 'detach';
+ push @utilLinks, a({-href => modeLink('attach', $note->idno)}, 'Attach')
+  if !defined $note->parent() && $mode ne 'attach';
+ push @utilLinks, a({-href => modeLink('del', $note->idno)}, 'Delete')
+  if $mode ne 'del';
+ print ' ', span({-class => 'editDel'}, join '&nbsp;', @utilLinks);
  print pre(join '',
   map { /$RE{URI}/ ? a({-href => escapeHTML $_}, escapeHTML $_)
    # Is escaping the URL in the HREF necessary and/or desirable?
