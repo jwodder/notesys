@@ -5,7 +5,8 @@
   - Notes with parents should have links to them.
  - Add a user confirmation step to detaching notes
  - When viewing an individual note, add a link to its parent if it has one.
- - Truncate long note titles when listing them in the 'attach' page
+ - Make the truncation of long titles in the 'attach' page smarter (e.g., by
+   splitting at word boundaries rather than always at 40 characters)
  - Make the confirmation pages for attaching & detaching notes refer to the
    notes involved by their (possibly truncated) titles rather than their ID
    numbers
@@ -63,3 +64,5 @@
 - Make the NoteSys.pm functions into methods of a database connection object?
 - Make NoteSys.pm check whether the notes referenced in arguments to functions
   exist
+- Should the functions for attaching & detaching notes update the 'edited'
+  fields?

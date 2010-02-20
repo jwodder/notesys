@@ -200,11 +200,14 @@ if ($mode eq 'edit') {
     print p('What would you like to attach this note to?');
     print start_form(-action => modeLink($mode, $modeArg));
     print popup_menu('parent', \@ids, $ids[0], {
-      map { $_ => Note::title fetchNote($_) } @ids
+      map {
+       my $title = fetchNote($_)->title;
+       if (length $title > 40) { $_ => substr($title, 0, 40) . "\x{2026}" }
+       else { $_ => $title }
+      } @ids
      });
-    print p(button(-value => 'View', -onClick =>
-     'noteWin(document.getElementsByTagName("select")[0].value);'),
-     '&nbsp;' x 20, submit(-value => 'Attach'));
+    print p(submit(-value => 'Attach'), '&nbsp;' x 20, button(-value => 'View',
+     -onClick => 'noteWin(document.getElementsByTagName("select")[0].value);'));
     print end_form;
     printNote $orphan;
    } else { print p("There's nothing to attach to!") }
