@@ -201,6 +201,8 @@ sub noteExists($) {
 sub cleanLabel($) {
  # not exported; called on titles & tags to rid them of undesirable characters
  (my $str = shift) =~ s/\s+/ /g;
+ #(my $str = shift) =~ s/[^[:graph:]]+/ /g;
+ # ^ This variant is not kind to non-ASCII characters.  Fix this.
  $str =~ s/^\s|\s$//g;
  return $str;
 }
