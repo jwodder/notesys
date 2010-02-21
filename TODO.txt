@@ -1,4 +1,4 @@
-- Implement hierarchic notes in the web interface
+Note hierarchies:
  - Make note listings display hierarchy information
   - The number of descendents (or just direct children?) should be displayed
     for all notes that have any.
@@ -15,10 +15,13 @@
  - Make note listings by tag only show the topmost notes with those tags
   - A note with the given tag that has $x descendents, of which $y also have
     the tag, should be labelled along the lines of "($y/$x descendents)"
- - Should the functions for attaching & detaching notes update the 'edited'
-   fields?
+ - The functions for attaching & detaching notes should update the 'edited'
+   fields
+ - Make dumpDB.pl & loadDB.pl preserve hierarchy information
+ - Make createNote, updateNote, and deleteNote handle hierarchy information
+   (deleteNote by detaching child notes)
 
-- Web interface-specific:
+Web interface:
  - Add more/better styles
  - Get the <textarea> contents to actually be monospaced in Safari (It works in
    Firefox.)
@@ -30,7 +33,7 @@
   - editing notes (both text & tag lists) directly in the listings
   - auto-completion of tag names
   - collapsing the contents of a displayed note
- - Make the <title> change depending on what is being viewed
+  - Implement $autoback using JavaScript instead of a deprecated use of <meta>.
  - When editing a note, increase the number of lines in the <textarea> based on
    the number of lines in the note (though with some upper limit so as to avoid
    incredibly large <textarea>'s)
@@ -40,40 +43,37 @@
    bottom of the output from ?mode=note queries (both successful & failed)
   - Make 'Back' links somehow ignore notes accessed via the attachment preview
     button
- - Make the confirmation pages automatically redirect you to ?back after a
-   certain amount of time
  - Make it possible to specify notes to hide/not show by default?
 
-- Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
-- Make createNote, updateNote, and deleteNote handle hierarchy information
-  (deleteNote by detaching child notes)
-- Give warnings for attempted deletions of nonexistent note IDs
-- Improve the sorting of notes when retrieving by tag
-- Add a way for the user to configure how notes are sorted
-- Tags:
+NoteSys.pm internals:
+ - Improve the sorting of notes when retrieving by tag
+ - Make the NoteSys.pm functions into methods of a database connection object?
+ - Make NoteSys.pm check whether the notes referenced in arguments to functions
+   exist
+ - Prevent control characters from appearing in titles, tag names, and note
+   bodies
+ - Trim trailing whitespace from note bodies
+ - Make cleanLabel() handle non-ASCII characters properly
+
+Tags:
  - Handle tags case-insensitively
  - Add a way to retrieve all untagged items
- - Add a way to get the unions, intersections, and complements of sets of
-   notes with given tags
+ - Add a way to get the unions, intersections, and complements of sets of notes
+   with given tags
  - Enforce a 32-character (or longer?) limit for tag names
  - Add a way to do batch operations like deleting or renaming all occurrences
    of a tag and replacing or augmenting all occurrences of a tag with one or
    more other tags
+
+- Add a way for the user to configure how notes are sorted
 - Test out the programs in util/
  - Make sure loadDB.pl handles Unicode input properly
+- Make the dumping & loading programs export & import notes as JSON (instead of
+  or in addition to the format currently used?)
 - Add an explicit license to the code
 - Add a README file, including instructions on how to set the system up
 - Add function documentation to NoteSys.pm
-- Make the NoteSys.pm functions into methods of a database connection object?
-- Make NoteSys.pm check whether the notes referenced in arguments to functions
-  exist
 - Advanced ideas:
  - Create a curses-based notesys interface
  - Make it possible to synchronize notesys databases across a network
  - Make the system multi-user
-- Prevent control characters from appearing in titles, tag names, and note
-  bodies
-- Trim trailing whitespace from note bodies
-- Make cleanLabel() handle non-ASCII characters properly
-- Make the dumping & loading programs export & import notes as JSON (instead of
-  or in addition to the format currently used?)
