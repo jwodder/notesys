@@ -1,6 +1,9 @@
 #!/usr/bin/perl -wnl -I..
 use strict;
-use NoteSys qw< :DEFAULT createDB >;
+use NoteSys;
+use NoteSys::Note;
+
+our $db;
 
 BEGIN {
  if (!@ARGV || @ARGV == 1 && $ARGV[0] eq '-C') {
@@ -12,13 +15,13 @@ BEGIN {
   if (-e $ARGV[0]) {
    print STDERR "$0: file \"$ARGV[0]\" already exists\n";
    exit 2;
-  } else { createDB $ARGV[0] }
+  } else { NoteSys::create $ARGV[0] }
  }
- connectDB shift;
+ $db = NoteSys::connect shift;
  $/ = '';
 }
 
-my $note = new Note title => 'Untitled', contents => '';
+my $note = new NoteSys::Note title => 'Untitled', contents => '';
 /^Title:\s*(.*)$/im && $note->title($1);
 /^Tags:\s*(.+?)\s*$/im && $note->tags([ grep {$_ ne ''} split /\s*,\s*/, $1 ]);
 /^Created:\s*(.+)$/im && $note->created($1);
@@ -27,6 +30,6 @@ if (/((?:^>.*?\n?)+)$/m) {
  (my $str = $1) =~ s/^>//gm;
  $note->contents($str);
 }
-createNote $note;
+$db->createNote($note);
 
-END { $? ? abandonDB : disconnectDB }
+END { $? ? $db->abandon : $db->disconnect if defined $db }

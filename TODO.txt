@@ -53,6 +53,8 @@ NoteSys.pm internals:
    bodies
  - Trim trailing whitespace from note bodies
  - Make cleanLabel() handle non-ASCII characters properly
+ - Make getAllNoteIDs and getTaggedNoteIDs (et alii?) take an optional argument
+   specifying how to sort the entries
 
 Tags:
  - Handle tags case-insensitively
@@ -65,13 +67,13 @@ Tags:
    more other tags
 
 - Add a way for the user to configure how notes are sorted
-- Test out the programs in util/
- - Make sure loadDB.pl handles Unicode input properly
 - Make the dumping & loading programs export & import notes as JSON (instead of
   or in addition to the format currently used?)
 - Add an explicit license to the code
 - Add a README file, including instructions on how to set the system up
 - Add function documentation to NoteSys.pm
+- Make dumpDB.pl output notes in ascending ID order rather than descending
+  creation order
 - Advanced ideas:
  - Create a curses-based notesys interface
  - Make it possible to synchronize notesys databases across a network
