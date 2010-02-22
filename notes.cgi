@@ -4,9 +4,11 @@ use CGI qw< :standard start_table start_Tr start_td start_div start_ul >;
 use CGI::Carp 'fatalsToBrowser';
 use Regexp::Common 'URI';
 use URI::Escape 'uri_escape_utf8';
-use NoteSys qw< :DEFAULT :hier >;
+use NoteSys;
+use NoteSys::Note;
 
 my $dbfile = '/Library/WebServer/Documents/db/notesHier.db';
+my $db;
 
 binmode STDOUT, ':encoding(UTF-8)';
 
@@ -47,7 +49,7 @@ sub preamble(;$$) {
  push @head, meta({-http_equiv => 'Refresh', -content => '5;url='
   . modeLink('back')}) if $autoback;
  print header(-type => 'text/html; charset=UTF-8', @cookies), start_html(-title
-  => defined $subtitle ? "Notes \x{2014} $subtitle" : 'Notes',
+  => defined $subtitle ? "NoteSys \x{2014} $subtitle" : 'NoteSys',
    # CGI.pm auto-escapes the contents of the title.
   -encoding => 'UTF-8', -declare_xml => 1, -style => {-src => 'notes.css'},
    # Yes, specifying the encoding twice is necessary so that CGI.pm will send
@@ -89,7 +91,7 @@ sub printNote($) {
  print start_div({-class => 'noteBlock'}), b(escapeHTML($note->title)); 
  my @utilLinks = ();
  push @utilLinks, a({-href => modeLink('note', $note->idno)}, 'View')
-  if $mode ne 'note';
+  unless $mode eq 'note' && $modeArg == $note->idno;
  push @utilLinks, a({-href => modeLink('edit', $note->idno)}, 'Edit')
   if $mode ne 'edit';
  push @utilLinks, a({-href => modeLink('detach', $note->idno)}, 'Detach')
@@ -126,21 +128,21 @@ if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
  print redirect(defined $last && $last ne '' ? modeLink('tag', $last)
   : modeLink 'all');
 } else {
- connectDB $dbfile;
+ $db = NoteSys::connect $dbfile;
  # If connecting to the database fails here before `preamble' is called,
  # CGI::Carp will still print the HTTP headers appropriately (though without a
  # good <title>).
  if ($mode eq 'edit') {
-  my $old = fetchNote $modeArg;
+  my $old = $db->fetchNote($modeArg);
   if (!defined $old) {
    preamble 'No such note';
    print p("There is no note #$modeArg....");
    print p(a({-href => modeLink 'back'}, 'Back'));
   } elsif (defined param('title')) {
    preamble 'Note edited', 1;
-   my $new = new Note idno => $old->idno, title => param('title'),
+   my $new = new NoteSys::Note idno => $old->idno, title => param('title'),
     contents => param('contents'), tags => [ parseTagList param('tags') ];
-   updateNote($old, $new);
+   $db->updateNote($old, $new);
    print p('Note edited'), p(a({-href => modeLink 'back'}, 'Back'));
   } else {
    preamble('Editing "' . $old->title . '"');
@@ -152,15 +154,15 @@ if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
     a({-href => modeLink 'back'}, 'Back'), end_form;
   }
  } elsif ($mode eq 'tag') {
-  preamble $modeArg;
-  my @notes = getTaggedNoteIDs $modeArg;
-  if (@notes) { map { printNote(fetchNote $_) } @notes }
+  preamble "Notes tagged \"$modeArg\"";
+  my @notes = $db->getTaggedNoteIDs($modeArg);
+  if (@notes) { map { printNote $db->fetchNote($_) } @notes }
   else { print p("There's nothing here.") }
  } elsif ($mode eq 'new') {
   if (defined param('title')) {
    preamble 'Note created', 1;
-   createNote(new Note title => param('title'), contents => param('contents'),
-    tags => [ parseTagList param('tags') ]);
+   $db->createNote(new NoteSys::Note title => param('title'), contents =>
+    param('contents'), tags => [ parseTagList param('tags') ]);
    print p('Note created'), p(a({-href => modeLink 'back'}, 'Back'));
   } else {
    preamble 'New';
@@ -173,17 +175,17 @@ if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
   }
  } elsif ($mode eq 'del') {
   if (defined param('decision') && param('decision') eq 'Yes') {
-   if (!noteExists($modeArg)) {
+   if (!$db->noteExists($modeArg)) {
     preamble 'No such note';
     print p("There is no note #$modeArg....");
    } else {
     preamble 'Note deleted', 1;
-    deleteNote $modeArg;
+    $db->deleteNote($modeArg);
     print p('Note deleted');
    }
    print p(a({-href => modeLink 'back'}, 'Back'));
   } else {
-   my $delee = fetchNote $modeArg;
+   my $delee = $db->fetchNote($modeArg);
    if (!defined $delee) {
     preamble 'No such note';
     print p("There is no note #$modeArg....");
@@ -205,40 +207,38 @@ if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
    } else {
     my $parent = param('parent');
     my $child = $modeArg;
-    if (!noteExists($parent)) {
+    if (!$db->noteExists($parent)) {
      preamble 'No such note';
      print p("There is no note #$parent....");
-    } elsif (!noteExists($child)) {
+    } elsif (!$db->noteExists($child)) {
      preamble 'No such note';
      print p("There is no note #$child....");
     } else {
      preamble 'Attached', 1;
-     attachNote($parent, $child);
+     $db->attachNote($parent, $child);
      print p('Note #' . a({-href => modeLink('note', $child)}, $child)
       . ' was attached to note #' . a({-href => modeLink('note', $parent)},
       $parent));
     }
    }
   } else {
-   my $orphan = fetchNote $modeArg;
+   my $orphan = $db->fetchNote($modeArg);
    if (!defined $orphan) {
     preamble 'No such note';
-    print p("There is no note #$modeArg....")
+    print p("There is no note #$modeArg....");
    } else {
     preamble 'Attaching';
     # Check whether $orphan is currently attached to anything else.
-    my @ids = grep { $_ != $modeArg } getAllNoteIDs;
+    my @ids = grep { $_ != $modeArg } $db->getAllNoteIDs;
     # Should the note IDs be fetched in a different order than usual?
     if (@ids) {
      print p('What would you like to attach this note to?');
      print start_form(-action => modeLink($mode, $modeArg));
-     print popup_menu('parent', \@ids, $ids[0], {
-       map {
-	my $title = fetchNote($_)->title;
-	if (length $title > 40) { $_ => substr($title, 0, 40) . "\x{2026}" }
-	else { $_ => $title }
-       } @ids
-      });
+     print popup_menu('parent', \@ids, $ids[0], {map {
+       my $title = $db->fetchNote($_)->title;
+       if (length $title > 40) { $_ => substr($title, 0, 40) . "\x{2026}" }
+       else { $_ => $title }
+      } @ids});
      print p(submit(-value => 'Attach'), '&nbsp;' x 20, button(-value => 'View',
       -onClick =>
        'noteWin(document.getElementsByTagName("select")[0].value);'));
@@ -249,26 +249,26 @@ if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
   }
   print p(a({-href => modeLink 'back'}, 'Back'));
  } elsif ($mode eq 'detach') {
-  if (!noteExists($modeArg)) {
+  if (!$db->noteExists($modeArg)) {
    preamble 'No such note';
    print p("There is no note #$modeArg....");
   } else {
    preamble 'Detached', 1;
-   detachNote $modeArg;
+   $db->detachNote($modeArg);
    print p('Note #' . a({-href => modeLink('note', $modeArg)}, $modeArg)
     . ' was detached from its parent note.');
    # Add in a link to $modeArg's former parent.
   }
   print p(a({-href => modeLink 'back'}, 'Back'));
  } elsif ($mode eq 'note') {
-  my $note = fetchNote $modeArg;
+  my $note = $db->fetchNote($modeArg);
   if (!defined $note) {
    preamble 'No such note';
    print p("There is no note #$modeArg....");
   } else {
    preamble $note->title;
    printNote $note;
-   my @children = $note->children;
+   my @children = $db->getChildren($note->idno);
    if (@children == 1) {
     print div({-class => 'childQty'}, '1 Child:');
     printNote $children[0];
@@ -279,21 +279,20 @@ if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
   }
  } else {
   preamble;
-  my @notes = getAllNoteIDs;
-  if (@notes) { map { printNote(fetchNote $_) } @notes }
+  my @notes = $db->getAllNoteIDs;
+  if (@notes) { map { printNote $db->fetchNote($_) } @notes }
   else { print p("There's nothing here.") }
  }
  print p(a({-href => modeLink 'all'}, 'All notes'), '|',
   a({-href => modeLink 'new'}, 'New note'));
  print end_td, start_td({-class => 'tagList'});
- my($notes, $tags) = (countNotes, countTags);
+ my($notes, $tags) = ($db->countNotes, $db->countTags);
  print p({-class => 'totals'}, $notes, $notes == 1 ? 'note' : 'notes', '|',
   $tags, $tags == 1 ? 'tag' : 'tags');
- print ul(map {
-  li(a({-href => modeLink('tag', $_->[0])}, escapeHTML($_->[0])),
-   '(' . $_->[1] . ')');
- } getTagsAndQtys);
- print end_td, end_Tr, end_table, end_html;
+ print start_ul;
+ print li(a({-href => modeLink('tag', $_->[0])}, escapeHTML($_->[0])),
+  '(' . $_->[1] . ')') for $db->getTagsAndQtys;
+ print end_ul, end_td, end_Tr, end_table, end_html;
 }
 
-END { $? ? abandonDB : disconnectDB }
+END { $? ? $db->abandon : $db->disconnect if defined $db }

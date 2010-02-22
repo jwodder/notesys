@@ -47,7 +47,6 @@ Web interface:
 
 NoteSys.pm internals:
  - Improve the sorting of notes when retrieving by tag
- - Make the NoteSys.pm functions into methods of a database connection object?
  - Make NoteSys.pm check whether the notes referenced in arguments to functions
    exist
  - Prevent control characters from appearing in titles, tag names, and note
