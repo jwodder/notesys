@@ -5,10 +5,8 @@ Note hierarchies:
   - Notes with parents should have links to them.
  - Add a user confirmation step to detaching notes
  - When viewing an individual note, add a link to its parent if it has one.
- - Make the truncation of long titles in the 'attach' page smarter (e.g., by
-   splitting at word boundaries rather than always at 40 characters)
  - Make the confirmation pages for attaching & detaching notes refer to the
-   notes involved by their (possibly truncated) titles rather than their ID
+   notes involved by their (possibly truncated) titles rather than by their ID
    numbers
  - Make the confirmation page for detaching notes refer to the former parent
  - Make the 'all' note listing show only top-level notes
@@ -55,7 +53,8 @@ NoteSys.pm internals:
  - Make cleanLabel() handle non-ASCII characters properly
  - Make getAllNoteIDs and getTaggedNoteIDs (et alii?) take an optional argument
    specifying how to sort the entries
- - Make topLevelNotes() fetch notes in some deterministic order
+ - Make Note objects only fetch their 'contents' fields when the accessor is
+   called (assuming that it makes things faster, of course)
 
 Tags:
  - Handle tags case-insensitively

@@ -35,22 +35,12 @@ sub connect($;%) {
  bless { %attrs };
 }
 
-sub abandon {
- my $self = shift;
- $self->{db}->rollback;
- delete $self->{getTags};
- delete $self->{noteById};
- delete $self->{getTaggedNotes};
- delete $self->{getChildren};
- delete $self->{addTag};
- delete $self->{delTag};
- $self->{db}->disconnect;
- delete $self->{db};
-}
+sub abandon {my $self = shift; $self->{db}->rollback; $self->_disconnect; }
 
-sub disconnect {
+sub disconnect {my $self = shift; $self->{db}->commit; $self->_disconnect; }
+
+sub _disconnect {
  my $self = shift;
- $self->{db}->commit;
  # Undefining all of the prepared statement handles seems to be the only way to
  # avoid warnings about closing the database connection "with active statement
  # handles" (No, calling 'finish' on them doesn't work).
@@ -123,8 +113,8 @@ sub createNote { # Returns the ID of the new note
  my($self, $new) = @_;
  # Should these statements be prepared?
  if (defined $new->created || defined $new->edited) {
-  $self->{db}->do('INSERT INTO notes (title, contents, created, edited) VALUES'
-   . ' (?, ?, ?, ?)', {}, cleanLabel($new->title), $new->contents,
+  $self->{db}->do('INSERT INTO notes (title, contents, created, edited)'
+   . ' VALUES (?, ?, ?, ?)', {}, cleanLabel($new->title), $new->contents,
    $new->created || $new->edited, $new->edited || $new->created)
  } else {
   $self->{db}->do('INSERT INTO notes (title, contents) VALUES (?, ?)', {},
@@ -184,7 +174,8 @@ sub detachNote {
 }
 
 sub topLevelNotes {
- @{$_[0]{db}->selectcol_arrayref('SELECT idno FROM notes WHERE parent=NULL')}
+ @{$_[0]{db}->selectcol_arrayref('SELECT idno FROM notes WHERE parent=NULL'
+  . ' ORDER BY created DESC')}
 }
 
 sub getInternalDates {

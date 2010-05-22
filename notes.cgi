@@ -85,6 +85,12 @@ sub wrapLines($;$) {
  } split /\n/, $str;
 }
 
+sub trunc($) {
+ my $str = shift;
+ if (length $str <= 40) { $str }
+ else { (wrapLines $str, 40)[0] . "\x{2026}" }
+}
+
 sub printNote($) {
  my $note = shift;
  return if !defined $note;
@@ -234,11 +240,8 @@ if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
     if (@ids) {
      print p('What would you like to attach this note to?');
      print start_form(-action => modeLink($mode, $modeArg));
-     print popup_menu('parent', \@ids, $ids[0], {map {
-       my $title = $db->fetchNote($_)->title;
-       if (length $title > 40) { $_ => substr($title, 0, 40) . "\x{2026}" }
-       else { $_ => $title }
-      } @ids});
+     print popup_menu('parent', \@ids, $ids[0],
+      { map { $_ => trunc $db->fetchNote($_)->title } @ids });
      print p(submit(-value => 'Attach'), '&nbsp;' x 20, button(-value => 'View',
       -onClick =>
        'noteWin(document.getElementsByTagName("select")[0].value);'));
