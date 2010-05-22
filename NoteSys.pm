@@ -200,7 +200,7 @@ sub noteExists {
   . ' idno=?)', {}, $_[1]))[0]
 }
 
-sub getChildren { map { $_[0]->fetchNote($_) } $_[0]->getChildNoteIDs($_[1]) }
+sub fetchChildren { map { $_[0]->fetchNote($_) } $_[0]->getChildNoteIDs($_[1]) }
 
 sub cleanLabel($) {
  # called on titles & tags to rid them of undesirable characters

@@ -55,6 +55,7 @@ NoteSys.pm internals:
  - Make cleanLabel() handle non-ASCII characters properly
  - Make getAllNoteIDs and getTaggedNoteIDs (et alii?) take an optional argument
    specifying how to sort the entries
+ - Make topLevelNotes() fetch notes in some deterministic order
 
 Tags:
  - Handle tags case-insensitively

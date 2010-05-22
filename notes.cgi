@@ -268,7 +268,7 @@ if ($mode eq 'back' || $mode eq 'del' && defined param('decision')
   } else {
    preamble $note->title;
    printNote $note;
-   my @children = $db->getChildren($note->idno);
+   my @children = $db->fetchChildren($note->idno);
    if (@children == 1) {
     print div({-class => 'childQty'}, '1 Child:');
     printNote $children[0];
