@@ -17,6 +17,20 @@
  - Make the confirmation pages automatically redirect you to ?back after a
    certain amount of time
  - Make it possible to specify notes to hide/not show by default?
+ - When viewing all notes with a given tag, the tag name in the list of tags
+   should be made bold and not a link
+ - Regexp::Common::URI doesn't match https links by default and matches gopher
+   URLs poorly; there doesn't seem to be an easy way to correct this.  See:
+   Regexp::Common::URI::{http,gopher}
+ - When viewing all notes with a given tag, a list of all other tags used by
+   those notes (and their frequencies among the set) should be shown somewhere.
+ - Add "Edit" and "Delete" links at the bottoms of very long notes?
+ - Make it possible to rename or delete all occurrences of a tag in one action
+ - Add a search-like box for selecting tags without having to scroll through
+   the list
+ - Make the "Back" links make use of HTTP-Referrer whenever possible instead of
+   cookies
+ - Overly-long URLs should be displayed truncated with ellipses
 - Implement hierarchic to-do items
  - Add ways to manipulate the hierarchy to the web interface
  - Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
@@ -28,8 +42,8 @@
 - Tags:
  - Handle tags case-insensitively
  - Add a way to retrieve all untagged items
- - Add a way to get the unions, intersections, and complements of sets of
-   notes with given tags
+ - Add a way to get the unions, intersections, and complements of sets of notes
+   with given tags
  - Enforce a 32-character (or longer?) limit for tag names
  - Add a way to do batch operations like deleting or renaming all occurrences
    of a tag and replacing or augmenting all occurrences of a tag with one or

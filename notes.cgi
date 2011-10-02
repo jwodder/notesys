@@ -83,9 +83,8 @@ sub printNote($) {
   $note->idno)}, 'Edit') . '&nbsp;' . a({-href => modeLink('del',
   $note->idno)}, 'Delete'));
  print pre(join '',
-  map { /$RE{URI}/ ? a({-href => escapeHTML $_}, escapeHTML $_)
-   # Is escaping the URL in the HREF necessary and/or desirable?
-   : escapeHTML $_ }
+  map { /$RE{URI}/ ? a({-href => $_}, escapeHTML $_) : escapeHTML $_ }
+   # CGI.pm escapes the HREF attribute automatically.
   split /($RE{URI})/, join "\n", map { wrapLines($_, 80) } $note->contents)
   if $note->contents ne '';
  print p({-class => 'tags'}, join ', ', map {
