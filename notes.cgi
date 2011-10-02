@@ -80,8 +80,7 @@ sub wrapLines($;$) {
    } else { /\s+/ && push @lines, substr $_, 0, $-[0], '' }
    s/^\s+//;
   }
-  if ($_ ne '') { (@lines, $_) }
-  else { @lines }
+  $_ eq '' ? @lines : (@lines, $_);
  } split /\n/, $str;
 }
 
@@ -107,11 +106,13 @@ sub printNote($) {
  push @utilLinks, a({-href => modeLink('del', $note->idno)}, 'Delete')
   if $mode ne 'del';
  print ' ', span({-class => 'editDel'}, join '&nbsp;', @utilLinks);
- print pre(join '',
-  map { /$RE{URI}/ ? a({-href => $_}, escapeHTML $_) : escapeHTML $_ }
-   # CGI.pm escapes the HREF attribute automatically.
-  split /($RE{URI})/, join "\n", map { wrapLines($_, 80) } $note->contents)
-  if $note->contents ne '';
+ print pre(join "\n", map {
+   s/\G(.*?)($RE{URI})|\G(.+)$
+    /defined $1 ? escapeHTML($1) . a({-href => $2}, escapeHTML $2)
+     : escapeHTML $3  # CGI.pm escapes HREF attributes automatically.
+    /gex;
+   $_;
+  } wrapLines($note->contents, 80)) if $note->contents ne '';
  print p({-class => 'tags'}, join ', ', map {
   a({-href => modeLink('tag', $_)}, escapeHTML($_))
  } $note->tagList);

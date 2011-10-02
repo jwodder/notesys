@@ -207,7 +207,7 @@ sub cleanLabel($) {
 __END__
 
 SQLite3 database contents:
- - See createDB() for the actual complete definitions.
+ - See create() for the actual complete definitions.
  - TABLE notes
   - idno - INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT - note ID
   - title - VARCHAR(255) - note title; make this larger?
