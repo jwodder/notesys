@@ -1,4 +1,4 @@
-#!/usr/bin/perl -wl
+#!/usr/bin/perl -wl -CO
 use strict;
 use CGI qw< :standard start_table start_Tr start_td start_div start_ul >;
 use CGI::Carp 'fatalsToBrowser';
@@ -7,8 +7,6 @@ use URI::Escape 'uri_escape_utf8';
 use NoteSys;
 
 my $dbfile = '/Library/WebServer/Documents/db/notes.db';
-
-binmode STDOUT, ':encoding(UTF-8)';
 
 # This whole 'mode' system may be overkill, but it allows the code for
 # switching between modes to be neatly encapsulated into one place from which

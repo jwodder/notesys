@@ -26,8 +26,8 @@
    those notes (and their frequencies among the set) should be shown somewhere.
  - Add "Edit" and "Delete" links at the bottoms of very long notes?
  - Make it possible to rename or delete all occurrences of a tag in one action
- - Add a search-like box for selecting tags without having to scroll through
-   the list
+ - Add a search-like box for selecting tags (and intersections of sets of tags)
+   without having to scroll through the list
  - Make the "Back" links make use of HTTP-Referrer whenever possible instead of
    cookies
  - Overly-long URLs should be displayed truncated with ellipses

@@ -6,6 +6,8 @@
 # database.
 
 package NoteSys;
+use warnings;
+use strict;
 require Exporter;
 our @ISA = ('Exporter');
 our $VERSION = v1.0;
@@ -105,7 +107,7 @@ sub updateNote($$) {
   if (exists $oldTags{$t}) { $oldTags{$t}++ }
   else { $addTag->execute($old->idno, $t) }
  }
- while (($tag, $kept) = each %oldTags) {
+ while (my($tag, $kept) = each %oldTags) {
   $delTag->execute($old->idno, $tag) if !$kept
  }
  $db->do('UPDATE notes SET title=?, contents=?, edited=CURRENT_TIMESTAMP' .
