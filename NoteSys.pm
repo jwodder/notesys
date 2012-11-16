@@ -6,6 +6,8 @@
 # database.
 
 package NoteSys;
+use warnings;
+use strict;
 use POSIX 'strftime';
 use DBI;
 use NoteSys::Note;
@@ -32,7 +34,7 @@ sub connect($;%) {
   . ' VALUES (?, ?)');
  $attrs{delTag} = $attrs{db}->prepare('DELETE FROM taggings WHERE note=?'
   . ' AND tag=?');
- bless { %attrs };
+ bless \%attrs;
 }
 
 sub abandon {my $self = shift; $self->{db}->rollback; $self->_disconnect; }

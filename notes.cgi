@@ -69,18 +69,22 @@ EOJS
 sub wrapLines($;$) {
  my $str = shift;
  my $len = shift || 80;
- $str =~ s/\s+$//;
+ $str =~ s/\s+\z//;
  map {
-  my @lines = ();
-  while (length > $len && /\s+/) {
-   if (reverse (substr $_, 0, $len + 1) =~ /\s+/) {
-    # Adding one to the length causes a space immediately after the first $len
-    # characters to be taken into account.
-    push @lines, substr $_, 0, $len + 1 - $+[0], ''
-   } else { /\s+/ && push @lines, substr $_, 0, $-[0], '' }
-   s/^\s+//;
+  s/\s+\z//;
+  if ($_ eq '') { ('') }
+  else {
+   my @lines = ();
+   while (length > $len && /\s+/) {
+    if (reverse (substr $_, 0, $len + 1) =~ /\s+/) {
+     # Adding one to the length causes a space immediately after the first $len
+     # characters to be taken into account.
+     push @lines, substr $_, 0, $len + 1 - $+[0], ''
+    } else { /\s+/ && push(@lines, substr $_, 0, $-[0], '') }
+    s/^\s+//;
+   }
+   $_ eq '' ? @lines : (@lines, $_);
   }
-  $_ eq '' ? @lines : (@lines, $_);
  } split /\n/, $str;
 }
 
