@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w -I..
+#!/usr/bin/perl -w -I.. -CO
 use strict;
 use NoteSys;
 
@@ -7,7 +7,6 @@ if (!@ARGV) {
  exit 2;
 }
 
-binmode STDOUT, ':encoding(UTF-8)';
 connectDB $ARGV[0];
 for (getAllNoteIDs) {
  my $note = fetchNote $_;
