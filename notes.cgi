@@ -86,7 +86,7 @@ sub printNote($) {
  print pre(join "\n", map {
    s/\G(.*?)($RE{URI})|\G(.+)$
     /defined $1 ? escapeHTML($1) . a({-href => $2}, escapeHTML $2)
-     : escapeHTML $3  # CGI.pm escapes HREF attributes automatically.
+		: escapeHTML $3  # CGI.pm escapes HREF attributes automatically.
     /gex;
    $_;
   } wrapLines($note->contents, 80)) if $note->contents ne '';

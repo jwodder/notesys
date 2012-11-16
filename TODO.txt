@@ -1,3 +1,4 @@
+- Synchronize the non-hierarchy-related changes between the branches
 - Web interface-specific:
  - Add more/better styles
  - Get the <textarea> contents to actually be monospaced in Safari (It works in
@@ -31,6 +32,8 @@
  - Make the "Back" links make use of HTTP-Referrer whenever possible instead of
    cookies
  - Overly-long URLs should be displayed truncated with ellipses
+ - Add support for Markdown-style hyperlinks, thus avoiding the need to display
+   overly long URLs
 - Implement hierarchic to-do items
  - Add ways to manipulate the hierarchy to the web interface
  - Make dumpDB.pl & loadDB.pl somehow preserve hierarchy information
@@ -66,3 +69,6 @@
 - Make cleanLabel() handle non-ASCII characters properly
 - Make the dumping & loading programs export & import notes as JSON (instead of
   or in addition to the format currently used?)
+- It would probably be a good idea for Note objects to only store created &
+  edited times as seconds since the epoch and leave the formatting up to the
+  program actually doing the displaying

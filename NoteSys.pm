@@ -13,7 +13,7 @@ our @ISA = ('Exporter');
 our $VERSION = v1.0;
 our @EXPORT = qw< connectDB abandonDB disconnectDB countNotes countTags
  fetchNote getTaggedNoteIDs getAllNoteIDs updateNote deleteNote createNote
- getTagsAndQtys getInternalDates >;
+ getTagsAndQtys getInternalDates getEpochDates >;
 our @EXPORT_OK = qw< createDB getChildNoteIDs getNoteTreeHash attachNote
  detachNote topLevelNotes >;
 our %EXPORT_TAGS = (hier => [qw< getChildNoteIDs getNoteTreeHash attachNote
@@ -195,11 +195,17 @@ sub getInternalDates($) {
  # Should this statement be prepared?
 }
 
+sub getEpochDates($) {
+ # Returns the timestamps on the given note as seconds since the Unix epoch
+ $db->selectrow_array('SELECT strftime("%s", created) AS created, strftime("%s", edited) AS edited FROM notes WHERE idno=?', {}, @_)
+ # Should this statement be prepared?
+}
+
 sub cleanLabel($) {
  # not exported; called on titles & tags to rid them of undesirable characters
  (my $str = shift) =~ s/\s+/ /g;
  #(my $str = shift) =~ s/[^[:graph:]]+/ /g;
- # ^ This variant is not kind to non-ASCII characters.  Fix this.
+ ### ^ This variant is not kind to non-ASCII characters.  Fix this.
  $str =~ s/^\s|\s$//g;
  return $str;
 }
