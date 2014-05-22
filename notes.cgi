@@ -44,13 +44,15 @@ if ($mode eq 'all') {
  @cookies = (-cookie => cookie(-name => 'lastTag', -value => $modeArg))
 }
 
-print header(-type => 'text/html; charset=UTF-8', @cookies), start_html(-title
- => $mode eq 'tag' ? "Notes \x{2014} $modeArg" : 'Notes', -encoding => 'UTF-8',
- -declare_xml => 1, -style => {-src => 'notes.css'}, -head => Link({-rel =>
- 'icon', -type => 'text/png', -href => 'notes.png'}));
-# Yes, specifying the encoding twice is necessary so that CGI.pm will send the
-# correct headers and so that the in-document charset information agrees with
-# said headers.
+print header(-type => 'text/html; charset=UTF-8', @cookies);
+print start_html(-title => $mode eq 'tag' ? "Notes \x{2014} $modeArg" : 'Notes',
+ -encoding => 'UTF-8',
+ # Yes, specifying the encoding twice is necessary so that CGI.pm will send the
+ # correct headers and so that the in-document charset information agrees with
+ # said headers.
+ -declare_xml => 1,
+ -style => {-src => 'notes.css'},
+ -head => Link({-rel => 'icon', -type => 'text/png', -href => 'notes.png'}));
 
 connectDB $dbfile;
 
@@ -102,6 +104,7 @@ sub printNote($) {
 sub parseTagList($) {
  (my $str = shift) =~ s/^\s+|\s+$//g;
  map { $_ eq '' ? () : $_ } split /\s*,\s*/, $str;
+ ### Why not `grep { $_ ne '' } ...` ?
 }
 
 print start_table({-border => 0, -align => 'center'}), start_Tr,
